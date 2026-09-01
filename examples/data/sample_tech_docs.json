@@ -1,0 +1,63 @@
+{
+  "name": "tech_knowledge_base",
+  "description": "A curated tech knowledge base comparing programming languages, databases, and vector indexing for RAG retrieval benchmarking.",
+  "documents": [
+    {
+      "id": "doc_python",
+      "text": "Python is a high-level, dynamically typed multi-paradigm programming language. It emphasizes code readability with its notable use of significant whitespace. Python features a comprehensive standard library and is exceptionally popular in data science, artificial intelligence, machine learning, and rapid prototyping web development with frameworks like FastAPI and Django.",
+      "metadata": {"category": "programming", "ecosystem": "python"}
+    },
+    {
+      "id": "doc_rust",
+      "text": "Rust is a multi-paradigm, general-purpose systems programming language that emphasizes performance, type safety, and concurrency. Rust enforces memory safety through a borrow checker and ownership model without requiring an automated garbage collector. It is widely adopted for high-throughput network services, browser engines, operating systems, and performance-critical AI infrastructure.",
+      "metadata": {"category": "programming", "ecosystem": "rust"}
+    },
+    {
+      "id": "doc_postgres",
+      "text": "PostgreSQL is a powerful, open-source object-relational database system with over 35 years of active development. It provides strong reliability, feature robustness, and complete ACID transaction guarantees. PostgreSQL supports complex relational queries, foreign keys, triggers, JSONB semi-structured documents, and vector similarity search extensions like pgvector.",
+      "metadata": {"category": "database", "type": "relational"}
+    },
+    {
+      "id": "doc_redis",
+      "text": "Redis is an open-source in-memory data store used as a distributed cache, message broker, and streaming engine. Redis delivers sub-millisecond response times by holding datasets in RAM. It supports versatile data structures including strings, hashes, lists, sets, sorted sets, bitmaps, hyperloglogs, and geospatial indexes.",
+      "metadata": {"category": "database", "type": "in-memory-cache"}
+    },
+    {
+      "id": "doc_vector_rag",
+      "text": "Retrieval-Augmented Generation (RAG) enhances Large Language Model outputs by retrieving relevant factual context from external knowledge stores before generation. Chunking strategy, semantic vector search, BM25 keyword matching, and reranking pipelines directly determine the precision and recall of retrieved passages, mitigating model hallucination.",
+      "metadata": {"category": "ai", "domain": "retrieval"}
+    }
+  ],
+  "queries": [
+    {
+      "id": "q1",
+      "query": "Which systems programming language provides compile-time memory safety without garbage collection?",
+      "relevant_doc_ids": ["doc_rust"],
+      "ground_truth_answer": "Rust"
+    },
+    {
+      "id": "q2",
+      "query": "What in-memory data store provides sub-millisecond latency for caching and streaming?",
+      "relevant_doc_ids": ["doc_redis"],
+      "ground_truth_answer": "Redis"
+    },
+    {
+      "id": "q3",
+      "query": "How does Retrieval-Augmented Generation (RAG) reduce LLM hallucination using chunking and retrieval?",
+      "relevant_doc_ids": ["doc_vector_rag"],
+      "ground_truth_answer": "By retrieving relevant factual context from external knowledge stores before generation"
+    },
+    {
+      "id": "q4",
+      "query": "Which database offers full ACID transactions and pgvector extension?",
+      "relevant_doc_ids": ["doc_postgres"],
+      "ground_truth_answer": "PostgreSQL"
+    },
+    {
+      "id": "q5",
+      "query": "What language is known for readability and high adoption in artificial intelligence and data science?",
+      "relevant_doc_ids": ["doc_python"],
+      "ground_truth_answer": "Python"
+    }
+  ]
+}
