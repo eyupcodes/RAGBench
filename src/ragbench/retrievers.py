@@ -95,6 +95,11 @@ class BM25Retriever(BaseRetriever):
 
     def _index(self) -> None:
         self.tokenized_corpus = [_tokenize(chunk.text) for chunk in self.chunks]
+        if not self.tokenized_corpus:
+            self._bm25 = None
+            self._is_rank_bm25 = False
+            return
+
         try:
             from rank_bm25 import BM25Okapi
             self._bm25 = BM25Okapi(self.tokenized_corpus)
@@ -104,6 +109,9 @@ class BM25Retriever(BaseRetriever):
             self._is_rank_bm25 = False
 
     def _search(self, query: str, top_k: int) -> List[Tuple[Chunk, float]]:
+        if self._bm25 is None:
+            return []
+
         query_tokens = _tokenize(query)
         if not query_tokens:
             return []
