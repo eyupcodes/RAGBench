@@ -74,6 +74,11 @@ class BenchmarkConfig(BaseModel):
         None,
         description="sentence-transformers model name or None for deterministic fallback"
     )
+    rrf_k: int = Field(
+        60,
+        ge=1,
+        description="Reciprocal Rank Fusion constant k for hybrid retrieval"
+    )
 
 
 class EvaluationMetrics(BaseModel):

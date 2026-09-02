@@ -219,10 +219,44 @@ class VectorRetriever(BaseRetriever):
         return []
 
 
+class HybridRetriever(BaseRetriever):
+    """Hybrid RRF retriever combining BM25 and TF-IDF."""
+
+    def __init__(self, chunks, rrf_k: int = 60):
+        self.rrf_k = rrf_k
+        super().__init__(chunks)
+
+    def _index(self) -> None:
+        self._bm25 = BM25Retriever(self.chunks)
+        self._tfidf = TFIDFVectorRetriever(self.chunks)
+
+    def _search(self, query: str, top_k: int):
+        pool_k = max(top_k * 3, 20)
+        bm25_results = self._bm25._search(query, pool_k)
+        tfidf_results = self._tfidf._search(query, pool_k)
+        def rank_map(results):
+            return {chunk.id: rank for rank, (chunk, _) in enumerate(results, start=1)}
+        bm25_ranks = rank_map(bm25_results)
+        tfidf_ranks = rank_map(tfidf_results)
+        chunk_by_id = {c.id: c for c in self.chunks}
+        all_ids = set(bm25_ranks.keys()) | set(tfidf_ranks.keys())
+        scored = []
+        for cid in all_ids:
+            rrf_score = 0.0
+            if cid in bm25_ranks:
+                rrf_score += 1.0 / (self.rrf_k + bm25_ranks[cid])
+            if cid in tfidf_ranks:
+                rrf_score += 1.0 / (self.rrf_k + tfidf_ranks[cid])
+            scored.append((chunk_by_id[cid], rrf_score))
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return scored[:top_k]
+
+
 def get_retriever(
     name: str,
     chunks: List[Chunk],
-    vector_model_name: Optional[str] = None
+    vector_model_name: Optional[str] = None,
+    rrf_k: int = 60,
 ) -> BaseRetriever:
     """Factory function for instantiating retrievers."""
     clean_name = name.lower().strip()
@@ -232,7 +266,9 @@ def get_retriever(
         return VectorRetriever(chunks=chunks, model_name=vector_model_name)
     elif clean_name in ["tfidf", "sparse_vector"]:
         return TFIDFVectorRetriever(chunks=chunks)
+    elif clean_name in ["hybrid", "rrf", "hybrid_rrf"]:
+        return HybridRetriever(chunks=chunks, rrf_k=rrf_k)
     else:
         raise ValueError(
-            f"Unknown retrieval strategy '{name}'. Supported: 'bm25', 'vector', 'tfidf'"
+            f"Unknown retrieval strategy '{name}'. Supported: 'bm25', 'vector', 'tfidf', 'hybrid'"
         )

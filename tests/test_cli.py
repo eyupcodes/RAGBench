@@ -114,6 +114,20 @@ def test_cli_main_json_output(tmp_path, capsys):
     assert len(parsed_json["results"]) == 1
 
 
+def test_cli_hybrid_retriever(tmp_path, capsys):
+    dataset_content = {
+        "name": "hybrid_cli_ds",
+        "documents": [{"id": "d1", "text": "Python programming language readability."}],
+        "queries": [{"id": "q1", "query": "Python", "relevant_doc_ids": ["d1"]}]
+    }
+    ds_file = tmp_path / "hybrid_ds.json"
+    ds_file.write_text(json.dumps(dataset_content), encoding="utf-8")
+    exit_code = main(["--dataset", str(ds_file), "--chunkers", "fixed", "--retrievers", "hybrid", "--rrf-k", "30"])
+    assert exit_code == 0
+    captured = capsys.readouterr()
+    assert "hybrid" in captured.out.lower()
+
+
 def test_cli_main_missing_dataset_file(capsys):
     exit_code = main(["--dataset", "non_existent_dataset.json"])
     assert exit_code == 1

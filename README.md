@@ -1,4 +1,4 @@
-# RAGBench ⚡
+﻿# RAGBench ⚡
 
 A modular, lightweight benchmark toolkit for systematically comparing **chunking**, **embedding**, and **retrieval** strategies on Retrieval-Augmented Generation (RAG) datasets.
 
@@ -9,7 +9,7 @@ A modular, lightweight benchmark toolkit for systematically comparing **chunking
 **RAGBench**, RAG (Retrieval-Augmented Generation) sistemlerinde kullanılan farklı metin bölme (chunking) ve arama/erişim (retrieval) tekniklerini aynı veri seti üzerinde deterministik olarak karşılaştırır.
 
 - **Chunking Stratejileri**: Fixed-size windowing vs. Recursive structural boundaries.
-- **Retrieval Stratejileri**: Okapi BM25 keyword matching vs. Sparse TF-IDF cosine vs. Dense sentence-transformer embeddings.
+- **Retrieval Stratejileri**: Okapi BM25 keyword matching vs. Sparse TF-IDF cosine vs. Dense sentence-transformer embeddings vs. Hybrid RRF fusion.
 - **Doğruluk ve Hız Metrikleri**: Recall@K, Precision@K, MRR (Mean Reciprocal Rank), query latency (ms) ve isteğe bağlı answer generation evaluation hooks.
 
 ## 2. Neden Kullanılır? (Why Use It)
@@ -140,6 +140,7 @@ Veri setinizi basit bir JSON dosyası olarak hazırlayabilirsiniz:
 │      Chunking Engine         │      Retrieval Engine        │
 │  - FixedSizeChunker          │  - BM25Retriever             │
 │  - RecursiveCharacterChunker │  - TFIDFVectorRetriever      │
+│                              │  - HybridRetriever (RRF)       │
 │                              │  - VectorRetriever (dense)   │
 ├──────────────────────────────┴──────────────────────────────┤
 │                     Evaluation Engine                       │
@@ -167,7 +168,7 @@ pytest --cov=ragbench --cov-report=term-missing
 - [x] V1 — Evaluation metrics (Recall@K, Precision@K, MRR, Latency)
 - [x] V1 — Answer evaluation hook (Token overlap / Exact match)
 - [x] V1 — CLI & ASCII report generator
-- [ ] V2 — Hybrid retrieval (RRF / Reciprocal Rank Fusion)
+- [x] V2 — Hybrid retrieval (RRF / Reciprocal Rank Fusion)
 - [ ] V2 — Cross-encoder reranking integration (FlashRank / Cohere / BGE)
 - [ ] V2 — Multi-embedding model comparisons
 

@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -25,3 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Command-line runner `ragbench` with configurable arguments.
   - Formatted ASCII comparison table and JSON export options.
   - Comprehensive unit and integration test suite with 90% test coverage.
+
+## [0.2.0] - 2026-09-02
+
+### Added
+- **Hybrid Retrieval (RRF)**: `HybridRetriever` combining BM25 and TF-IDF via Reciprocal Rank Fusion (`rrf_k` default 60). Accessible as `hybrid`, `rrf`, `hybrid_rrf`.
+- **BenchmarkConfig**: New `rrf_k` field for tuning RRF constant.
+- **CLI**: `--rrf-k` flag and `hybrid` retriever option.

@@ -1,9 +1,10 @@
-"""Tests for retrieval strategies."""
+﻿"""Tests for retrieval strategies."""
 
 import pytest
 from ragbench.models import Chunk
 from ragbench.retrievers import (
     BM25Retriever,
+    HybridRetriever,
     PurePythonBM25,
     TFIDFVectorRetriever,
     VectorRetriever,
@@ -98,3 +99,38 @@ def test_get_retriever_factory(sample_chunks):
 
     with pytest.raises(ValueError, match="Unknown retrieval strategy"):
         get_retriever("non_existent_retriever", chunks=sample_chunks)
+
+
+def test_hybrid_retriever_basic(sample_chunks):
+    retriever = HybridRetriever(chunks=sample_chunks)
+    results = retriever.retrieve("memory safety", top_k=2)
+    assert len(results) >= 1
+    assert results[0].chunk.doc_id == "doc_rust"
+    assert results[0].score > 0.0
+
+
+def test_hybrid_retriever_empty_chunks():
+    retriever = HybridRetriever(chunks=[])
+    assert retriever.retrieve("query", top_k=5) == []
+
+
+def test_hybrid_retriever_empty_query(sample_chunks):
+    retriever = HybridRetriever(chunks=sample_chunks)
+    assert retriever.retrieve("   ", top_k=5) == []
+
+
+def test_hybrid_retriever_custom_rrf_k(sample_chunks):
+    retriever = HybridRetriever(chunks=sample_chunks, rrf_k=30)
+    assert retriever.rrf_k == 30
+    results = retriever.retrieve("Python programming", top_k=1)
+    assert len(results) == 1
+
+
+def test_get_retriever_hybrid_factory(sample_chunks):
+    r_hybrid = get_retriever("hybrid", chunks=sample_chunks)
+    assert isinstance(r_hybrid, HybridRetriever)
+    r_rrf = get_retriever("rrf", chunks=sample_chunks, rrf_k=30)
+    assert isinstance(r_rrf, HybridRetriever)
+    assert r_rrf.rrf_k == 30
+    r_alias = get_retriever("hybrid_rrf", chunks=sample_chunks)
+    assert isinstance(r_alias, HybridRetriever)

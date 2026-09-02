@@ -56,6 +56,7 @@ class BenchmarkRunner:
                     name=ret_strat,
                     chunks=chunks,
                     vector_model_name=active_config.vector_model_name,
+                    rrf_k=active_config.rrf_k,
                 )
 
                 # 3. Execute retrieval for all queries

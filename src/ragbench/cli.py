@@ -73,7 +73,7 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
         "--retrievers", "-r",
         nargs="+",
         default=["bm25", "vector"],
-        help="Retrieval strategies to evaluate (e.g. bm25 vector tfidf)"
+        help="Retrieval strategies to evaluate (e.g. bm25 vector tfidf hybrid)"
     )
     parser.add_argument(
         "--k-values", "-k",
@@ -99,6 +99,12 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
         type=str,
         default=None,
         help="sentence-transformers model name for dense vector search"
+    )
+    parser.add_argument(
+        "--rrf-k",
+        type=int,
+        default=60,
+        help="RRF constant k for hybrid retrieval (default: 60)"
     )
     parser.add_argument(
         "--output", "-o",
@@ -136,6 +142,7 @@ def main(args: Optional[List[str]] = None) -> int:
         chunk_size=parsed.chunk_size,
         chunk_overlap=parsed.chunk_overlap,
         vector_model_name=parsed.vector_model,
+        rrf_k=parsed.rrf_k,
     )
 
     runner = BenchmarkRunner(config=config)
