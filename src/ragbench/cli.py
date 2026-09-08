@@ -33,10 +33,12 @@ def format_ascii_table(report: BenchmarkReport) -> str:
         for res in report.results
     )
 
+    ret_width = max(12, max((len(r.retrieval_strategy) for r in report.results), default=12))
+
     if has_reranker:
-        header = f"{'Chunking':<10} | {'Retrieval':<10} | {'Reranker':<10} | {'Chunks':<6} | {k_headers} | {'MRR':<6} | {'Lat(ms)':<7}"
+        header = f"{'Chunking':<10} | {'Retrieval':<{ret_width}} | {'Reranker':<10} | {'Chunks':<6} | {k_headers} | {'MRR':<6} | {'Lat(ms)':<7}"
     else:
-        header = f"{'Chunking':<12} | {'Retrieval':<12} | {'Chunks':<6} | {k_headers} | {'MRR':<6} | {'Lat(ms)':<7}"
+        header = f"{'Chunking':<12} | {'Retrieval':<{ret_width}} | {'Chunks':<6} | {k_headers} | {'MRR':<6} | {'Lat(ms)':<7}"
     lines.append(header)
     lines.append("-" * len(header))
 
@@ -48,13 +50,13 @@ def format_ascii_table(report: BenchmarkReport) -> str:
 
         if has_reranker:
             chunk_name = res.chunking_strategy[:10]
-            ret_name = res.retrieval_strategy[:10]
+            ret_name = res.retrieval_strategy[:ret_width]
             rerank_name = (res.reranking_strategy or "none")[:10]
-            row = f"{chunk_name:<10} | {ret_name:<10} | {rerank_name:<10} | {n_chunks:<6} | {recalls_str} | {mrr_str:<6} | {lat_str:<7}"
+            row = f"{chunk_name:<10} | {ret_name:<{ret_width}} | {rerank_name:<10} | {n_chunks:<6} | {recalls_str} | {mrr_str:<6} | {lat_str:<7}"
         else:
             chunk_name = res.chunking_strategy[:12]
-            ret_name = res.retrieval_strategy[:12]
-            row = f"{chunk_name:<12} | {ret_name:<12} | {n_chunks:<6} | {recalls_str} | {mrr_str:<6} | {lat_str:<7}"
+            ret_name = res.retrieval_strategy[:ret_width]
+            row = f"{chunk_name:<12} | {ret_name:<{ret_width}} | {n_chunks:<6} | {recalls_str} | {mrr_str:<6} | {lat_str:<7}"
         lines.append(row)
 
     lines.append("=" * 88)
@@ -115,6 +117,12 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
         help="sentence-transformers model name for dense vector search"
     )
     parser.add_argument(
+        "--vector-models",
+        nargs="+",
+        default=None,
+        help="List of sentence-transformers model names to compare across vector retrieval"
+    )
+    parser.add_argument(
         "--rrf-k",
         type=int,
         default=60,
@@ -168,6 +176,7 @@ def main(args: Optional[List[str]] = None) -> int:
         chunk_size=parsed.chunk_size,
         chunk_overlap=parsed.chunk_overlap,
         vector_model_name=parsed.vector_model,
+        vector_model_names=parsed.vector_models,
         rrf_k=parsed.rrf_k,
         reranking_strategy=parsed.reranker,
         reranker_model_name=parsed.reranker_model,

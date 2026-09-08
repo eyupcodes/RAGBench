@@ -26,6 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Formatted ASCII comparison table and JSON export options.
   - Comprehensive unit and integration test suite with 90% test coverage.
 
+## [0.4.0] - 2026-09-02
+
+### Added
+- **Multi-Embedding Comparison**: Compare multiple dense embedding models across vector retrieval simultaneously.
+- **Retriever Syntax**: Support for `vector:<model_name>` and `dense:<model_name>` notation in `get_retriever`.
+- **BenchmarkConfig & Models**: Added `vector_model_names` to `BenchmarkConfig` and `embedding_model` to `StrategyResult`.
+- **BenchmarkRunner**: Automatic expansion of vector retrieval strategies across configured embedding models.
+- **CLI**: `--vector-models` flag supporting multiple model names with dynamic column widths in ASCII table.
+
 ## [0.3.0] - 2026-09-02
 
 ### Added

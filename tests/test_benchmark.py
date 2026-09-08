@@ -129,6 +129,39 @@ def test_benchmark_runner_with_reranker(sample_dataset):
     assert report.results[0].metrics.mrr >= 0.0
 
 
+def test_benchmark_runner_multi_embedding_models(sample_dataset):
+    config = BenchmarkConfig(
+        chunking_strategies=["fixed"],
+        retrieval_strategies=["vector"],
+        vector_model_names=["model_a", "model_b"],
+        k_values=[1, 3],
+        chunk_size=100,
+        chunk_overlap=20,
+    )
+    runner = BenchmarkRunner(config=config)
+    report = runner.run(dataset=sample_dataset)
+    assert len(report.results) == 2
+    assert report.results[0].embedding_model == "model_a"
+    assert report.results[1].embedding_model == "model_b"
+    assert "model_a" in report.results[0].retrieval_strategy
+    assert "model_b" in report.results[1].retrieval_strategy
+
+
+def test_benchmark_runner_vector_model_syntax(sample_dataset):
+    config = BenchmarkConfig(
+        chunking_strategies=["fixed"],
+        retrieval_strategies=["vector:emb1", "vector:emb2"],
+        k_values=[1, 3],
+        chunk_size=100,
+        chunk_overlap=20,
+    )
+    runner = BenchmarkRunner(config=config)
+    report = runner.run(dataset=sample_dataset)
+    assert len(report.results) == 2
+    assert report.results[0].embedding_model == "emb1"
+    assert report.results[1].embedding_model == "emb2"
+
+
 def test_benchmark_runner_empty_dataset():
     empty_ds = BenchmarkDataset(name="empty", documents=[], queries=[])
     runner = BenchmarkRunner()

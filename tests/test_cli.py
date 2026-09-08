@@ -155,6 +155,26 @@ def test_cli_reranker_option(tmp_path, capsys):
     assert "lexical" in captured.out
 
 
+def test_cli_multi_vector_models(tmp_path, capsys):
+    dataset_content = {
+        "name": "multi_vec_cli_ds",
+        "documents": [{"id": "d1", "text": "Embeddings and vector search."}],
+        "queries": [{"id": "q1", "query": "embeddings", "relevant_doc_ids": ["d1"]}]
+    }
+    ds_file = tmp_path / "vec_ds.json"
+    ds_file.write_text(json.dumps(dataset_content), encoding="utf-8")
+    exit_code = main([
+        "--dataset", str(ds_file),
+        "--chunkers", "fixed",
+        "--retrievers", "vector",
+        "--vector-models", "emb_alpha", "emb_beta",
+    ])
+    assert exit_code == 0
+    captured = capsys.readouterr()
+    assert "emb_alpha" in captured.out
+    assert "emb_beta" in captured.out
+
+
 def test_cli_main_missing_dataset_file(capsys):
     exit_code = main(["--dataset", "non_existent_dataset.json"])
     assert exit_code == 1

@@ -74,6 +74,10 @@ class BenchmarkConfig(BaseModel):
         None,
         description="sentence-transformers model name or None for deterministic fallback"
     )
+    vector_model_names: Optional[List[str]] = Field(
+        None,
+        description="Optional list of embedding model names to compare across vector retrieval"
+    )
     rrf_k: int = Field(
         60,
         ge=1,
@@ -108,6 +112,10 @@ class StrategyResult(BaseModel):
     reranking_strategy: Optional[str] = Field(
         None,
         description="Reranking strategy applied to retrieved candidates if any"
+    )
+    embedding_model: Optional[str] = Field(
+        None,
+        description="Embedding model name used if vector retrieval"
     )
     num_chunks: int
     metrics: EvaluationMetrics

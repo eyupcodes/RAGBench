@@ -134,3 +134,13 @@ def test_get_retriever_hybrid_factory(sample_chunks):
     assert r_rrf.rrf_k == 30
     r_alias = get_retriever("hybrid_rrf", chunks=sample_chunks)
     assert isinstance(r_alias, HybridRetriever)
+
+
+def test_get_retriever_vector_model_syntax(sample_chunks):
+    r_vec = get_retriever("vector:custom-MiniLM-L6", chunks=sample_chunks)
+    assert isinstance(r_vec, VectorRetriever)
+    assert r_vec.model_name == "custom-MiniLM-L6"
+
+    r_dense = get_retriever("dense:bge-Small-EN", chunks=sample_chunks)
+    assert isinstance(r_dense, VectorRetriever)
+    assert r_dense.model_name == "bge-Small-EN"

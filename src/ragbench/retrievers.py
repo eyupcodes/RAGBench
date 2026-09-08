@@ -262,6 +262,10 @@ def get_retriever(
     clean_name = name.lower().strip()
     if clean_name == "bm25":
         return BM25Retriever(chunks=chunks)
+    elif clean_name.startswith("vector:") or clean_name.startswith("dense:"):
+        _, model_spec = name.strip().split(":", 1)
+        target_model = model_spec.strip() or vector_model_name
+        return VectorRetriever(chunks=chunks, model_name=target_model)
     elif clean_name in ["vector", "dense", "vector_search"]:
         return VectorRetriever(chunks=chunks, model_name=vector_model_name)
     elif clean_name in ["tfidf", "sparse_vector"]:

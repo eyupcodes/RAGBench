@@ -51,12 +51,33 @@ class BenchmarkRunner:
             )
             chunks = chunker.chunk_documents(dataset.documents)
 
-            for ret_strat in active_config.retrieval_strategies:
+            expanded_retrieval_strategies: List[str] = []
+            for ret_s in active_config.retrieval_strategies:
+                if (
+                    ret_s.lower().strip() in ["vector", "dense", "vector_search"]
+                    and active_config.vector_model_names
+                ):
+                    for m in active_config.vector_model_names:
+                        expanded_retrieval_strategies.append(f"{ret_s}:{m}")
+                else:
+                    expanded_retrieval_strategies.append(ret_s)
+
+            for ret_strat in expanded_retrieval_strategies:
+                model_for_retriever = active_config.vector_model_name
+                embedding_model: Optional[str] = None
+                clean_s = ret_strat.lower().strip()
+                if clean_s.startswith("vector:") or clean_s.startswith("dense:"):
+                    _, parsed_model = ret_strat.split(":", 1)
+                    model_for_retriever = parsed_model.strip()
+                    embedding_model = model_for_retriever
+                elif clean_s in ["vector", "dense", "vector_search"]:
+                    embedding_model = active_config.vector_model_name
+
                 # 2. Build retrieval index
                 retriever = get_retriever(
                     name=ret_strat,
                     chunks=chunks,
-                    vector_model_name=active_config.vector_model_name,
+                    vector_model_name=model_for_retriever,
                     rrf_k=active_config.rrf_k,
                 )
                 reranker = get_reranker(
@@ -104,6 +125,7 @@ class BenchmarkRunner:
                         chunking_strategy=chunk_strat,
                         retrieval_strategy=ret_strat,
                         reranking_strategy=active_config.reranking_strategy,
+                        embedding_model=embedding_model,
                         num_chunks=len(chunks),
                         metrics=metrics,
                     )
