@@ -28,19 +28,33 @@ def format_ascii_table(report: BenchmarkReport) -> str:
     k_keys = sorted(first_res.metrics.recall_at_k.keys())
     k_headers = " | ".join([f"R@{k:<2}" for k in k_keys])
 
-    header = f"{'Chunking':<12} | {'Retrieval':<12} | {'Chunks':<6} | {k_headers} | {'MRR':<6} | {'Lat(ms)':<7}"
+    has_reranker = any(
+        res.reranking_strategy and res.reranking_strategy.lower() not in ["none", "noop", ""]
+        for res in report.results
+    )
+
+    if has_reranker:
+        header = f"{'Chunking':<10} | {'Retrieval':<10} | {'Reranker':<10} | {'Chunks':<6} | {k_headers} | {'MRR':<6} | {'Lat(ms)':<7}"
+    else:
+        header = f"{'Chunking':<12} | {'Retrieval':<12} | {'Chunks':<6} | {k_headers} | {'MRR':<6} | {'Lat(ms)':<7}"
     lines.append(header)
     lines.append("-" * len(header))
 
     for res in report.results:
-        chunk_name = res.chunking_strategy[:12]
-        ret_name = res.retrieval_strategy[:12]
         n_chunks = str(res.num_chunks)
         recalls_str = " | ".join([f"{res.metrics.recall_at_k.get(k, 0.0):.3f}" for k in k_keys])
         mrr_str = f"{res.metrics.mrr:.3f}"
         lat_str = f"{res.metrics.avg_latency_ms:.2f}"
 
-        row = f"{chunk_name:<12} | {ret_name:<12} | {n_chunks:<6} | {recalls_str} | {mrr_str:<6} | {lat_str:<7}"
+        if has_reranker:
+            chunk_name = res.chunking_strategy[:10]
+            ret_name = res.retrieval_strategy[:10]
+            rerank_name = (res.reranking_strategy or "none")[:10]
+            row = f"{chunk_name:<10} | {ret_name:<10} | {rerank_name:<10} | {n_chunks:<6} | {recalls_str} | {mrr_str:<6} | {lat_str:<7}"
+        else:
+            chunk_name = res.chunking_strategy[:12]
+            ret_name = res.retrieval_strategy[:12]
+            row = f"{chunk_name:<12} | {ret_name:<12} | {n_chunks:<6} | {recalls_str} | {mrr_str:<6} | {lat_str:<7}"
         lines.append(row)
 
     lines.append("=" * 88)
@@ -107,6 +121,18 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
         help="RRF constant k for hybrid retrieval (default: 60)"
     )
     parser.add_argument(
+        "--reranker",
+        type=str,
+        default=None,
+        help="Optional reranking strategy: 'none', 'lexical', 'cross-encoder'"
+    )
+    parser.add_argument(
+        "--reranker-model",
+        type=str,
+        default=None,
+        help="Model name for cross-encoder reranker"
+    )
+    parser.add_argument(
         "--output", "-o",
         type=str,
         default=None,
@@ -143,6 +169,8 @@ def main(args: Optional[List[str]] = None) -> int:
         chunk_overlap=parsed.chunk_overlap,
         vector_model_name=parsed.vector_model,
         rrf_k=parsed.rrf_k,
+        reranking_strategy=parsed.reranker,
+        reranker_model_name=parsed.reranker_model,
     )
 
     runner = BenchmarkRunner(config=config)

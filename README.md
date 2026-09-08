@@ -169,7 +169,7 @@ pytest --cov=ragbench --cov-report=term-missing
 - [x] V1 — Answer evaluation hook (Token overlap / Exact match)
 - [x] V1 — CLI & ASCII report generator
 - [x] V2 — Hybrid retrieval (RRF / Reciprocal Rank Fusion)
-- [ ] V2 — Cross-encoder reranking integration (FlashRank / Cohere / BGE)
+- [x] V2 — Cross-encoder reranking integration (CrossEncoder & Lexical fallback)
 - [ ] V2 — Multi-embedding model comparisons
 
 ---

@@ -79,6 +79,14 @@ class BenchmarkConfig(BaseModel):
         ge=1,
         description="Reciprocal Rank Fusion constant k for hybrid retrieval"
     )
+    reranking_strategy: Optional[str] = Field(
+        None,
+        description="Optional reranking strategy: 'none', 'lexical', 'cross-encoder'"
+    )
+    reranker_model_name: Optional[str] = Field(
+        None,
+        description="Optional model name for cross-encoder reranker"
+    )
 
 
 class EvaluationMetrics(BaseModel):
@@ -97,6 +105,10 @@ class StrategyResult(BaseModel):
     """Results for one combination of (chunking_strategy, retrieval_strategy)."""
     chunking_strategy: str
     retrieval_strategy: str
+    reranking_strategy: Optional[str] = Field(
+        None,
+        description="Reranking strategy applied to retrieved candidates if any"
+    )
     num_chunks: int
     metrics: EvaluationMetrics
 

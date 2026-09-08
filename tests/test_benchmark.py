@@ -113,6 +113,22 @@ def test_benchmark_runner_hybrid(sample_dataset):
     assert report.results[0].metrics.mrr >= 0.0
 
 
+def test_benchmark_runner_with_reranker(sample_dataset):
+    config = BenchmarkConfig(
+        chunking_strategies=["fixed"],
+        retrieval_strategies=["bm25"],
+        reranking_strategy="lexical",
+        k_values=[1, 3],
+        chunk_size=100,
+        chunk_overlap=20,
+    )
+    runner = BenchmarkRunner(config=config)
+    report = runner.run(dataset=sample_dataset)
+    assert len(report.results) == 1
+    assert report.results[0].reranking_strategy == "lexical"
+    assert report.results[0].metrics.mrr >= 0.0
+
+
 def test_benchmark_runner_empty_dataset():
     empty_ds = BenchmarkDataset(name="empty", documents=[], queries=[])
     runner = BenchmarkRunner()

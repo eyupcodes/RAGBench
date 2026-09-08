@@ -128,6 +128,33 @@ def test_cli_hybrid_retriever(tmp_path, capsys):
     assert "hybrid" in captured.out.lower()
 
 
+def test_format_ascii_table_with_reranker(sample_report):
+    sample_report.results[0].reranking_strategy = "cross-encoder"
+    table_str = format_ascii_table(sample_report)
+    assert "Reranker" in table_str
+    assert "cross-enco" in table_str
+
+
+def test_cli_reranker_option(tmp_path, capsys):
+    dataset_content = {
+        "name": "rerank_cli_ds",
+        "documents": [{"id": "d1", "text": "Machine learning and deep neural networks."}],
+        "queries": [{"id": "q1", "query": "neural networks", "relevant_doc_ids": ["d1"]}]
+    }
+    ds_file = tmp_path / "rerank_ds.json"
+    ds_file.write_text(json.dumps(dataset_content), encoding="utf-8")
+    exit_code = main([
+        "--dataset", str(ds_file),
+        "--chunkers", "fixed",
+        "--retrievers", "bm25",
+        "--reranker", "lexical",
+    ])
+    assert exit_code == 0
+    captured = capsys.readouterr()
+    assert "Reranker" in captured.out
+    assert "lexical" in captured.out
+
+
 def test_cli_main_missing_dataset_file(capsys):
     exit_code = main(["--dataset", "non_existent_dataset.json"])
     assert exit_code == 1

@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Formatted ASCII comparison table and JSON export options.
   - Comprehensive unit and integration test suite with 90% test coverage.
 
+## [0.3.0] - 2026-09-02
+
+### Added
+- **Reranking Engine**: `BaseReranker`, `NoOpReranker`, `LexicalReranker`, and `CrossEncoderReranker` in `src/ragbench/rerankers.py`.
+- **BenchmarkConfig**: `reranking_strategy` and `reranker_model_name` fields.
+- **BenchmarkRunner**: Automatic candidate pool retrieval and reranking pipeline.
+- **CLI**: `--reranker` and `--reranker-model` flags with dynamic Reranker column in ASCII report.
+
 ## [0.2.0] - 2026-09-02
 
 ### Added

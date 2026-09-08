@@ -12,6 +12,7 @@ from ragbench.models import (
     StrategyResult,
 )
 from ragbench.retrievers import get_retriever
+from ragbench.rerankers import get_reranker
 
 
 class BenchmarkRunner:
@@ -58,16 +59,27 @@ class BenchmarkRunner:
                     vector_model_name=active_config.vector_model_name,
                     rrf_k=active_config.rrf_k,
                 )
+                reranker = get_reranker(
+                    name=active_config.reranking_strategy,
+                    model_name=active_config.reranker_model_name,
+                )
 
                 # 3. Execute retrieval for all queries
                 max_k = max(active_config.k_values) if active_config.k_values else 10
+                use_reranker = bool(
+                    active_config.reranking_strategy
+                    and active_config.reranking_strategy.lower() not in ["none", "noop"]
+                )
+                candidate_k = max(max_k * 3, 20) if use_reranker else max_k
                 query_results: List[List[RetrievalResult]] = []
                 latencies: List[float] = []
                 generated_answers: List[str] = []
 
                 for query in dataset.queries:
                     t0 = time.perf_counter()
-                    ret_res = retriever.retrieve(query=query.query, top_k=max_k)
+                    ret_res = retriever.retrieve(query=query.query, top_k=candidate_k)
+                    if use_reranker:
+                        ret_res = reranker.rerank(query=query.query, results=ret_res, top_k=max_k)
                     t1 = time.perf_counter()
 
                     latencies.append((t1 - t0) * 1000.0)
@@ -91,6 +103,7 @@ class BenchmarkRunner:
                     StrategyResult(
                         chunking_strategy=chunk_strat,
                         retrieval_strategy=ret_strat,
+                        reranking_strategy=active_config.reranking_strategy,
                         num_chunks=len(chunks),
                         metrics=metrics,
                     )
