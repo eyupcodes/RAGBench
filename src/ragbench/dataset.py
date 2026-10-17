@@ -42,12 +42,15 @@ def load_dataset_from_dict(data: Dict[str, Any]) -> BenchmarkDataset:
 
     _ensure_unique_ids("document", [d.id for d in documents])
     _ensure_unique_ids("query", [q.id for q in queries])
-    return BenchmarkDataset(
-        name=data.get("name", "unnamed_dataset"),
-        description=data.get("description"),
-        documents=documents,
-        queries=queries,
-    )
+    try:
+        return BenchmarkDataset(
+            name=data.get("name", "unnamed_dataset"),
+            description=data.get("description"),
+            documents=documents,
+            queries=queries,
+        )
+    except Exception as e:
+        raise DatasetLoadError(f"Failed to parse dataset records: {e}") from e
 
 
 def load_dataset_from_json(file_path: Union[str, Path]) -> BenchmarkDataset:

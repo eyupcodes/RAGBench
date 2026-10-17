@@ -151,3 +151,9 @@ def test_load_queries_from_json_rejects_duplicate_ids(tmp_path):
     )
     with pytest.raises(DatasetLoadError, match="Duplicate query IDs"):
         load_queries_from_json(q_file)
+
+
+def test_load_dataset_from_dict_invalid_name_raises_loader_error():
+    data = {"name": 123, "documents": [], "queries": []}
+    with pytest.raises(DatasetLoadError, match="Failed to parse dataset records"):
+        load_dataset_from_dict(data)
