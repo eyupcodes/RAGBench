@@ -1,10 +1,11 @@
 """Tests for reranker strategies and factory."""
 
 from unittest.mock import MagicMock
+
 import pytest
+
 from ragbench.models import Chunk, RetrievalResult
 from ragbench.rerankers import (
-    BaseReranker,
     CrossEncoderReranker,
     LexicalReranker,
     NoOpReranker,

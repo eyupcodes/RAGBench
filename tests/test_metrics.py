@@ -1,6 +1,7 @@
 """Tests for evaluation metrics and answer evaluation hooks."""
 
 import pytest
+
 from ragbench.metrics import (
     ExactMatchAnswerEvaluator,
     TokenOverlapAnswerEvaluator,

@@ -1,10 +1,9 @@
 """Command line interface and terminal reporting for RAGBench."""
 
 import argparse
-import json
 import sys
 from pathlib import Path
-from typing import List, Optional
+
 from ragbench import __version__
 from ragbench.benchmark import BenchmarkRunner
 from ragbench.dataset import load_dataset_from_json
@@ -13,7 +12,7 @@ from ragbench.models import BenchmarkConfig, BenchmarkReport
 
 def format_ascii_table(report: BenchmarkReport) -> str:
     """Format benchmark report into a clean, human-readable ASCII table."""
-    lines: List[str] = []
+    lines: list[str] = []
     lines.append("=" * 88)
     lines.append(f" RAGBench Evaluation Report: {report.dataset_name}")
     lines.append(f" Documents: {report.num_documents} | Queries: {report.num_queries}")
@@ -63,7 +62,7 @@ def format_ascii_table(report: BenchmarkReport) -> str:
     return "\n".join(lines)
 
 
-def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
+def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="ragbench",
         description="RAGBench: Benchmark chunking and retrieval strategies on RAG datasets."
@@ -155,7 +154,7 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     return parser.parse_args(args)
 
 
-def main(args: Optional[List[str]] = None) -> int:
+def main(args: list[str] | None = None) -> int:
     parsed = parse_args(args)
 
     dataset_path = Path(parsed.dataset)

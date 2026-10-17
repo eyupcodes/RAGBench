@@ -1,7 +1,9 @@
 """Tests for command-line interface and table reporting."""
 
 import json
+
 import pytest
+
 from ragbench.cli import format_ascii_table, main, parse_args
 from ragbench.models import (
     BenchmarkReport,

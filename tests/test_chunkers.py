@@ -1,6 +1,7 @@
 """Tests for chunking strategies."""
 
 import pytest
+
 from ragbench.chunkers import (
     FixedSizeChunker,
     RecursiveCharacterChunker,

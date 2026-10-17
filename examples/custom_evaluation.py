@@ -1,11 +1,12 @@
 """Example demonstration script: Running RAGBench programmatically with custom answer evaluation."""
 
 from pathlib import Path
+
 from ragbench.benchmark import BenchmarkRunner
+from ragbench.cli import format_ascii_table
 from ragbench.dataset import load_dataset_from_json
 from ragbench.metrics import TokenOverlapAnswerEvaluator
 from ragbench.models import BenchmarkConfig, RetrievalResult
-from ragbench.cli import format_ascii_table
 
 
 def mock_llm_synthesizer(query: str, retrieved_chunks: list[RetrievalResult]) -> str:

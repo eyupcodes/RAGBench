@@ -1,13 +1,10 @@
 """Edge case and hardening tests for RAGBench."""
 
-import pytest
 from ragbench.benchmark import BenchmarkRunner
-from ragbench.chunkers import FixedSizeChunker, RecursiveCharacterChunker
+from ragbench.chunkers import RecursiveCharacterChunker
 from ragbench.metrics import (
-    ExactMatchAnswerEvaluator,
     TokenOverlapAnswerEvaluator,
     calculate_precision_at_k,
-    calculate_recall_at_k,
     evaluate_retrieval_batch,
 )
 from ragbench.models import (
@@ -18,7 +15,7 @@ from ragbench.models import (
     Query,
     RetrievalResult,
 )
-from ragbench.retrievers import BM25Retriever, TFIDFVectorRetriever, VectorRetriever
+from ragbench.retrievers import BM25Retriever, TFIDFVectorRetriever
 
 
 def test_chunking_with_unicode_and_special_characters():

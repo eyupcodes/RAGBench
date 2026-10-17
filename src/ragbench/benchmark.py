@@ -1,7 +1,8 @@
 """Benchmark execution engine orchestrating chunking, indexing, retrieval, and evaluation."""
 
 import time
-from typing import Callable, List, Optional
+from collections.abc import Callable
+
 from ragbench.chunkers import get_chunker
 from ragbench.metrics import BaseAnswerEvaluator, evaluate_retrieval_batch
 from ragbench.models import (
@@ -11,28 +12,28 @@ from ragbench.models import (
     RetrievalResult,
     StrategyResult,
 )
-from ragbench.retrievers import get_retriever
 from ragbench.rerankers import get_reranker
+from ragbench.retrievers import get_retriever
 
 
 class BenchmarkRunner:
     """Orchestrates RAG benchmark comparisons across chunking and retrieval strategies."""
 
-    def __init__(self, config: Optional[BenchmarkConfig] = None):
+    def __init__(self, config: BenchmarkConfig | None = None):
         self.config = config or BenchmarkConfig()
 
     def run(
         self,
         dataset: BenchmarkDataset,
-        config: Optional[BenchmarkConfig] = None,
-        answer_evaluator: Optional[BaseAnswerEvaluator] = None,
-        answer_generator: Optional[Callable[[str, List[RetrievalResult]], str]] = None,
+        config: BenchmarkConfig | None = None,
+        answer_evaluator: BaseAnswerEvaluator | None = None,
+        answer_generator: Callable[[str, list[RetrievalResult]], str] | None = None,
     ) -> BenchmarkReport:
         """
         Execute benchmark evaluation across all configured strategy combinations.
         """
         active_config = config or self.config
-        results: List[StrategyResult] = []
+        results: list[StrategyResult] = []
 
         if not dataset.documents:
             return BenchmarkReport(
@@ -51,7 +52,7 @@ class BenchmarkRunner:
             )
             chunks = chunker.chunk_documents(dataset.documents)
 
-            expanded_retrieval_strategies: List[str] = []
+            expanded_retrieval_strategies: list[str] = []
             for ret_s in active_config.retrieval_strategies:
                 if (
                     ret_s.lower().strip() in ["vector", "dense", "vector_search"]
@@ -64,7 +65,7 @@ class BenchmarkRunner:
 
             for ret_strat in expanded_retrieval_strategies:
                 model_for_retriever = active_config.vector_model_name
-                embedding_model: Optional[str] = None
+                embedding_model: str | None = None
                 clean_s = ret_strat.lower().strip()
                 if clean_s.startswith("vector:") or clean_s.startswith("dense:"):
                     _, parsed_model = ret_strat.split(":", 1)
@@ -92,9 +93,9 @@ class BenchmarkRunner:
                     and active_config.reranking_strategy.lower() not in ["none", "noop"]
                 )
                 candidate_k = max(max_k * 3, 20) if use_reranker else max_k
-                query_results: List[List[RetrievalResult]] = []
-                latencies: List[float] = []
-                generated_answers: List[str] = []
+                query_results: list[list[RetrievalResult]] = []
+                latencies: list[float] = []
+                generated_answers: list[str] = []
 
                 for query in dataset.queries:
                     t0 = time.perf_counter()

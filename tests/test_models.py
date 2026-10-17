@@ -2,6 +2,7 @@
 
 import pytest
 from pydantic import ValidationError
+
 from ragbench.models import (
     BenchmarkConfig,
     BenchmarkDataset,
@@ -10,7 +11,6 @@ from ragbench.models import (
     Document,
     EvaluationMetrics,
     Query,
-    RetrievalResult,
     StrategyResult,
 )
 

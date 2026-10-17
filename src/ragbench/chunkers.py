@@ -1,8 +1,7 @@
 """Chunking strategies for RAGBench."""
 
-import re
 from abc import ABC, abstractmethod
-from typing import List, Optional
+
 from ragbench.models import Chunk, Document
 
 
@@ -21,13 +20,13 @@ class BaseChunker(ABC):
         self.chunk_overlap = chunk_overlap
 
     @abstractmethod
-    def chunk_document(self, document: Document) -> List[Chunk]:
+    def chunk_document(self, document: Document) -> list[Chunk]:
         """Split a document into chunks."""
         pass
 
-    def chunk_documents(self, documents: List[Document]) -> List[Chunk]:
+    def chunk_documents(self, documents: list[Document]) -> list[Chunk]:
         """Split multiple documents into chunks."""
-        all_chunks: List[Chunk] = []
+        all_chunks: list[Chunk] = []
         for doc in documents:
             all_chunks.extend(self.chunk_document(doc))
         return all_chunks
@@ -36,12 +35,12 @@ class BaseChunker(ABC):
 class FixedSizeChunker(BaseChunker):
     """Fixed-size character chunking with configurable overlap."""
 
-    def chunk_document(self, document: Document) -> List[Chunk]:
+    def chunk_document(self, document: Document) -> list[Chunk]:
         text = document.text
         if not text.strip():
             return []
 
-        chunks: List[Chunk] = []
+        chunks: list[Chunk] = []
         start = 0
         text_len = len(text)
         step = self.chunk_size - self.chunk_overlap
@@ -87,19 +86,19 @@ class RecursiveCharacterChunker(BaseChunker):
         self,
         chunk_size: int = 500,
         chunk_overlap: int = 50,
-        separators: Optional[List[str]] = None
+        separators: list[str] | None = None
     ):
         super().__init__(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
         self.separators = separators if separators is not None else self.DEFAULT_SEPARATORS
 
-    def _split_text(self, text: str, separators: List[str]) -> List[str]:
+    def _split_text(self, text: str, separators: list[str]) -> list[str]:
         """Recursively split text using the first matching separator."""
-        final_chunks: List[str] = []
+        final_chunks: list[str] = []
         if not text:
             return final_chunks
 
         separator = ""
-        new_separators: List[str] = []
+        new_separators: list[str] = []
         for i, sep in enumerate(separators):
             if sep == "":
                 separator = ""
@@ -115,7 +114,7 @@ class RecursiveCharacterChunker(BaseChunker):
         else:
             splits = list(text)
 
-        good_splits: List[str] = []
+        good_splits: list[str] = []
         for s in splits:
             if not s:
                 continue
@@ -129,7 +128,7 @@ class RecursiveCharacterChunker(BaseChunker):
                     for j in range(0, len(s), self.chunk_size - self.chunk_overlap):
                         good_splits.append(s[j:j + self.chunk_size])
 
-        current_chunk: List[str] = []
+        current_chunk: list[str] = []
         current_length = 0
 
         for piece in good_splits:
@@ -145,7 +144,7 @@ class RecursiveCharacterChunker(BaseChunker):
                     if joined:
                         final_chunks.append(joined)
 
-                    overlap_chunk: List[str] = []
+                    overlap_chunk: list[str] = []
                     overlap_len = 0
                     for rev_p in reversed(current_chunk):
                         if overlap_len + len(rev_p) <= self.chunk_overlap:
@@ -166,13 +165,13 @@ class RecursiveCharacterChunker(BaseChunker):
 
         return final_chunks
 
-    def chunk_document(self, document: Document) -> List[Chunk]:
+    def chunk_document(self, document: Document) -> list[Chunk]:
         text = document.text
         if not text.strip():
             return []
 
         raw_chunks = self._split_text(text, self.separators)
-        chunks: List[Chunk] = []
+        chunks: list[Chunk] = []
 
         for idx, chunk_text in enumerate(raw_chunks):
             if chunk_text.strip():
