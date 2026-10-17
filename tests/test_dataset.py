@@ -7,6 +7,7 @@ from ragbench.dataset import (
     load_dataset_from_dict,
     load_dataset_from_directory,
     load_dataset_from_json,
+    load_queries_from_json,
 )
 
 
@@ -93,3 +94,60 @@ def test_load_dataset_from_directory(tmp_path):
     doc_ids = {d.id for d in ds.documents}
     assert "intro" in doc_ids
     assert "guide" in doc_ids
+
+
+def test_load_dataset_from_directory_rejects_colliding_stems(tmp_path):
+    doc_dir = tmp_path / "docs"
+    (doc_dir / "a").mkdir(parents=True)
+    (doc_dir / "b").mkdir()
+    (doc_dir / "a" / "notes.md").write_text("first", encoding="utf-8")
+    (doc_dir / "b" / "notes.md").write_text("second", encoding="utf-8")
+    q_file = tmp_path / "queries.json"
+    q_file.write_text(json.dumps({"queries": []}), encoding="utf-8")
+
+    with pytest.raises(DatasetLoadError, match="Duplicate document ID 'notes'") as exc:
+        load_dataset_from_directory(doc_dir=doc_dir, queries_file=q_file)
+    assert "a" in str(exc.value) and "b" in str(exc.value)
+
+
+def test_load_dataset_from_directory_rejects_same_stem_different_suffix(tmp_path):
+    doc_dir = tmp_path / "docs"
+    doc_dir.mkdir()
+    (doc_dir / "x.txt").write_text("one", encoding="utf-8")
+    (doc_dir / "x.md").write_text("two", encoding="utf-8")
+    q_file = tmp_path / "queries.json"
+    q_file.write_text("[]", encoding="utf-8")
+
+    with pytest.raises(DatasetLoadError, match="Duplicate document ID 'x'"):
+        load_dataset_from_directory(doc_dir=doc_dir, queries_file=q_file)
+
+
+def test_load_dataset_from_dict_rejects_duplicate_document_ids():
+    data = {
+        "documents": [{"id": "d1", "text": "a"}, {"id": "d1", "text": "b"}],
+        "queries": [],
+    }
+    with pytest.raises(DatasetLoadError, match="Duplicate document IDs: 'd1'"):
+        load_dataset_from_dict(data)
+
+
+def test_load_dataset_from_dict_rejects_duplicate_query_ids():
+    data = {
+        "documents": [{"id": "d1", "text": "a"}],
+        "queries": [
+            {"id": "q1", "query": "x", "relevant_doc_ids": ["d1"]},
+            {"id": "q1", "query": "y", "relevant_doc_ids": ["d1"]},
+        ],
+    }
+    with pytest.raises(DatasetLoadError, match="Duplicate query IDs: 'q1'"):
+        load_dataset_from_dict(data)
+
+
+def test_load_queries_from_json_rejects_duplicate_ids(tmp_path):
+    q_file = tmp_path / "queries.json"
+    q_file.write_text(
+        json.dumps([{"id": "q1", "query": "x"}, {"id": "q1", "query": "y"}]),
+        encoding="utf-8",
+    )
+    with pytest.raises(DatasetLoadError, match="Duplicate query IDs"):
+        load_queries_from_json(q_file)
