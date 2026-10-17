@@ -1,7 +1,9 @@
 """Tests for dataset loading utilities."""
 
 import json
+
 import pytest
+
 from ragbench.dataset import (
     DatasetLoadError,
     load_dataset_from_dict,
@@ -16,13 +18,25 @@ def test_load_dataset_from_valid_dict():
         "name": "sample_rag",
         "description": "A sample RAG benchmark dataset",
         "documents": [
-            {"id": "doc1", "text": "Python is a popular programming language.", "metadata": {"topic": "python"}},
-            {"id": "doc2", "text": "Rust focuses on performance and memory safety.", "metadata": {"topic": "rust"}},
+            {
+                "id": "doc1",
+                "text": "Python is a popular programming language.",
+                "metadata": {"topic": "python"},
+            },
+            {
+                "id": "doc2",
+                "text": "Rust focuses on performance and memory safety.",
+                "metadata": {"topic": "rust"},
+            },
         ],
         "queries": [
-            {"id": "q1", "query": "Which language emphasizes memory safety?", "relevant_doc_ids": ["doc2"]},
+            {
+                "id": "q1",
+                "query": "Which language emphasizes memory safety?",
+                "relevant_doc_ids": ["doc2"],
+            },
             {"id": "q2", "query": "Tell me about Python", "relevant_doc_ids": ["doc1"]},
-        ]
+        ],
     }
     ds = load_dataset_from_dict(data)
     assert ds.name == "sample_rag"
@@ -50,7 +64,7 @@ def test_load_dataset_from_json_file(tmp_path):
     data = {
         "name": "file_dataset",
         "documents": [{"id": "d1", "text": "Hello world"}],
-        "queries": [{"id": "q1", "query": "Hello", "relevant_doc_ids": ["d1"]}]
+        "queries": [{"id": "q1", "query": "Hello", "relevant_doc_ids": ["d1"]}],
     }
     json_file = tmp_path / "dataset.json"
     json_file.write_text(json.dumps(data), encoding="utf-8")
@@ -76,7 +90,9 @@ def test_load_dataset_from_invalid_json_content(tmp_path):
 def test_load_dataset_from_directory(tmp_path):
     doc_dir = tmp_path / "docs"
     doc_dir.mkdir()
-    (doc_dir / "intro.md").write_text("# Intro\nThis is introductory text.", encoding="utf-8")
+    (doc_dir / "intro.md").write_text(
+        "# Intro\nThis is introductory text.", encoding="utf-8"
+    )
     (doc_dir / "guide.txt").write_text("Detailed guide content here.", encoding="utf-8")
 
     queries_data = {
@@ -87,7 +103,9 @@ def test_load_dataset_from_directory(tmp_path):
     q_file = tmp_path / "queries.json"
     q_file.write_text(json.dumps(queries_data), encoding="utf-8")
 
-    ds = load_dataset_from_directory(doc_dir=doc_dir, queries_file=q_file, dataset_name="dir_test")
+    ds = load_dataset_from_directory(
+        doc_dir=doc_dir, queries_file=q_file, dataset_name="dir_test"
+    )
     assert ds.name == "dir_test"
     assert len(ds.documents) == 2
     assert len(ds.queries) == 1

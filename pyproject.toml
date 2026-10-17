@@ -28,12 +28,14 @@ dev = [
     "pytest>=8.0.0",
     "pytest-cov>=4.0.0",
     "rank-bm25>=0.2.2",
+    "ruff>=0.13,<1",
 ]
 all = [
     "rank-bm25>=0.2.2",
     "sentence-transformers>=2.2.0",
     "pytest>=8.0.0",
     "pytest-cov>=4.0.0",
+    "ruff>=0.13,<1",
 ]
 
 [project.scripts]
@@ -46,3 +48,11 @@ where = ["src"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --strict-markers"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]  # line length is handled by ruff format

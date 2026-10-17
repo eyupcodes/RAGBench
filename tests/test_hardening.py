@@ -1,13 +1,10 @@
 """Edge case and hardening tests for RAGBench."""
 
-import pytest
 from ragbench.benchmark import BenchmarkRunner
-from ragbench.chunkers import FixedSizeChunker, RecursiveCharacterChunker
+from ragbench.chunkers import RecursiveCharacterChunker
 from ragbench.metrics import (
-    ExactMatchAnswerEvaluator,
     TokenOverlapAnswerEvaluator,
     calculate_precision_at_k,
-    calculate_recall_at_k,
     evaluate_retrieval_batch,
 )
 from ragbench.models import (
@@ -18,7 +15,7 @@ from ragbench.models import (
     Query,
     RetrievalResult,
 )
-from ragbench.retrievers import BM25Retriever, TFIDFVectorRetriever, VectorRetriever
+from ragbench.retrievers import BM25Retriever, TFIDFVectorRetriever
 
 
 def test_chunking_with_unicode_and_special_characters():
@@ -36,7 +33,12 @@ def test_chunking_with_unicode_and_special_characters():
 
 def test_retrieval_with_zero_matches():
     chunks = [
-        Chunk(id="c1", doc_id="d1", text="Cats and dogs are common domestic animals.", chunk_index=0),
+        Chunk(
+            id="c1",
+            doc_id="d1",
+            text="Cats and dogs are common domestic animals.",
+            chunk_index=0,
+        ),
     ]
     bm25 = BM25Retriever(chunks=chunks)
     results = bm25.retrieve(query="quantum mechanics astrophysics", top_k=5)
@@ -59,7 +61,13 @@ def test_metrics_zero_relevant_documents():
 
 
 def test_precision_recall_negative_or_zero_k():
-    res = [RetrievalResult(chunk=Chunk(id="c1", doc_id="d1", text="a", chunk_index=0), score=1.0, rank=1)]
+    res = [
+        RetrievalResult(
+            chunk=Chunk(id="c1", doc_id="d1", text="a", chunk_index=0),
+            score=1.0,
+            rank=1,
+        )
+    ]
     assert calculate_precision_at_k(res, {"d1"}, k=0) == 0.0
     assert calculate_precision_at_k(res, {"d1"}, k=-1) == 0.0
 
@@ -78,7 +86,11 @@ def test_benchmark_runner_single_doc_many_queries():
         for i in range(10)
     ]
     dataset = BenchmarkDataset(name="stress_q", documents=[doc], queries=queries)
-    runner = BenchmarkRunner(config=BenchmarkConfig(chunking_strategies=["fixed"], retrieval_strategies=["tfidf"]))
+    runner = BenchmarkRunner(
+        config=BenchmarkConfig(
+            chunking_strategies=["fixed"], retrieval_strategies=["tfidf"]
+        )
+    )
     report = runner.run(dataset)
 
     assert report.num_queries == 10

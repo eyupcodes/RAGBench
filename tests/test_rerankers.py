@@ -1,10 +1,11 @@
 """Tests for reranker strategies and factory."""
 
 from unittest.mock import MagicMock
+
 import pytest
+
 from ragbench.models import Chunk, RetrievalResult
 from ragbench.rerankers import (
-    BaseReranker,
     CrossEncoderReranker,
     LexicalReranker,
     NoOpReranker,
@@ -14,9 +15,21 @@ from ragbench.rerankers import (
 
 @pytest.fixture
 def sample_candidates():
-    c1 = Chunk(id="c1", doc_id="d1", text="Python is dynamic and versatile.", chunk_index=0)
-    c2 = Chunk(id="c2", doc_id="d2", text="Rust provides compile-time memory safety.", chunk_index=0)
-    c3 = Chunk(id="c3", doc_id="d3", text="PostgreSQL handles relational ACID data.", chunk_index=0)
+    c1 = Chunk(
+        id="c1", doc_id="d1", text="Python is dynamic and versatile.", chunk_index=0
+    )
+    c2 = Chunk(
+        id="c2",
+        doc_id="d2",
+        text="Rust provides compile-time memory safety.",
+        chunk_index=0,
+    )
+    c3 = Chunk(
+        id="c3",
+        doc_id="d3",
+        text="PostgreSQL handles relational ACID data.",
+        chunk_index=0,
+    )
     return [
         RetrievalResult(chunk=c1, score=0.5, rank=1),
         RetrievalResult(chunk=c2, score=0.4, rank=2),
@@ -69,7 +82,9 @@ def test_cross_encoder_reranker_with_mock_model(sample_candidates):
     mock_model.predict.return_value = [0.1, 0.95, 0.4]
 
     reranker = CrossEncoderReranker(model=mock_model)
-    out = reranker.rerank(query="Rust memory safety", results=sample_candidates, top_k=2)
+    out = reranker.rerank(
+        query="Rust memory safety", results=sample_candidates, top_k=2
+    )
 
     mock_model.predict.assert_called_once()
     assert len(out) == 2

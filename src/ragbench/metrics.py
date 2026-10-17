@@ -3,16 +3,18 @@
 import re
 from abc import ABC, abstractmethod
 from collections import Counter
-from typing import Callable, Dict, List, Optional, Set
+
 from ragbench.models import EvaluationMetrics, Query, RetrievalResult
 
 
-def _get_relevant_doc_ids(query: Query) -> Set[str]:
+def _get_relevant_doc_ids(query: Query) -> set[str]:
     """Extract ground truth document IDs for a query."""
     return set(query.relevant_doc_ids)
 
 
-def calculate_recall_at_k(results: List[RetrievalResult], relevant_ids: Set[str], k: int) -> float:
+def calculate_recall_at_k(
+    results: list[RetrievalResult], relevant_ids: set[str], k: int
+) -> float:
     """
     Calculate Recall@K: proportion of relevant documents retrieved in top-k results.
     """
@@ -25,7 +27,9 @@ def calculate_recall_at_k(results: List[RetrievalResult], relevant_ids: Set[str]
     return hits / len(relevant_ids)
 
 
-def calculate_precision_at_k(results: List[RetrievalResult], relevant_ids: Set[str], k: int) -> float:
+def calculate_precision_at_k(
+    results: list[RetrievalResult], relevant_ids: set[str], k: int
+) -> float:
     """Calculate Precision@K: proportion of top-k retrieved documents that are relevant."""
     if k <= 0:
         return 0.0
@@ -39,7 +43,7 @@ def calculate_precision_at_k(results: List[RetrievalResult], relevant_ids: Set[s
     return hits / len(top_k_results)
 
 
-def calculate_mrr(results: List[RetrievalResult], relevant_ids: Set[str]) -> float:
+def calculate_mrr(results: list[RetrievalResult], relevant_ids: set[str]) -> float:
     """Calculate Mean Reciprocal Rank (MRR) for a single query."""
     if not relevant_ids or not results:
         return 0.0
@@ -64,13 +68,17 @@ class ExactMatchAnswerEvaluator(BaseAnswerEvaluator):
     """Binary exact match answer evaluator (case-insensitive, trimmed)."""
 
     def evaluate(self, generated_answer: str, ground_truth: str) -> float:
-        return 1.0 if generated_answer.strip().lower() == ground_truth.strip().lower() else 0.0
+        return (
+            1.0
+            if generated_answer.strip().lower() == ground_truth.strip().lower()
+            else 0.0
+        )
 
 
 class TokenOverlapAnswerEvaluator(BaseAnswerEvaluator):
     """Token-level F1 overlap evaluator (deterministic, no external LLM required)."""
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         return re.findall(r"\b\w+\b", text.lower())
 
     def evaluate(self, generated_answer: str, ground_truth: str) -> float:
@@ -94,23 +102,34 @@ class TokenOverlapAnswerEvaluator(BaseAnswerEvaluator):
 
 
 def evaluate_retrieval_batch(
-    query_results: List[List[RetrievalResult]],
-    queries: List[Query],
-    k_values: List[int] = [1, 3, 5, 10],
-    latencies_ms: Optional[List[float]] = None,
-    answer_evaluator: Optional[BaseAnswerEvaluator] = None,
-    generated_answers: Optional[List[str]] = None,
+    query_results: list[list[RetrievalResult]],
+    queries: list[Query],
+    k_values: list[int] | None = None,
+    latencies_ms: list[float] | None = None,
+    answer_evaluator: BaseAnswerEvaluator | None = None,
+    generated_answers: list[str] | None = None,
 ) -> EvaluationMetrics:
-    """Calculate aggregate benchmark metrics across all queries."""
+    """Calculate aggregate benchmark metrics across all queries.
+
+    Raises ``ValueError`` if ``query_results`` does not have one entry per query,
+    since zipping them would silently drop queries from the averages.
+    """
+    if len(query_results) != len(queries):
+        raise ValueError(
+            f"query_results has {len(query_results)} entries "
+            f"but there are {len(queries)} queries"
+        )
+    if k_values is None:
+        k_values = [1, 3, 5, 10]
     if not queries:
         return EvaluationMetrics()
 
     n_queries = len(queries)
-    recall_sums: Dict[int, float] = {k: 0.0 for k in k_values}
-    precision_sums: Dict[int, float] = {k: 0.0 for k in k_values}
+    recall_sums: dict[int, float] = {k: 0.0 for k in k_values}
+    precision_sums: dict[int, float] = {k: 0.0 for k in k_values}
     mrr_sum = 0.0
 
-    for query, results in zip(queries, query_results):
+    for query, results in zip(queries, query_results, strict=True):
         rel_ids = _get_relevant_doc_ids(query)
         for k in k_values:
             recall_sums[k] += calculate_recall_at_k(results, rel_ids, k)
@@ -120,12 +139,14 @@ def evaluate_retrieval_batch(
     mean_recall = {k: round(val / n_queries, 4) for k, val in recall_sums.items()}
     mean_precision = {k: round(val / n_queries, 4) for k, val in precision_sums.items()}
     mean_mrr = round(mrr_sum / n_queries, 4)
-    avg_latency = round(sum(latencies_ms) / len(latencies_ms), 2) if latencies_ms else 0.0
+    avg_latency = (
+        round(sum(latencies_ms) / len(latencies_ms), 2) if latencies_ms else 0.0
+    )
 
     answer_score = None
     if answer_evaluator and generated_answers and len(generated_answers) == n_queries:
         scores = []
-        for q, gen_ans in zip(queries, generated_answers):
+        for q, gen_ans in zip(queries, generated_answers, strict=True):
             if q.ground_truth_answer is not None:
                 score = answer_evaluator.evaluate(gen_ans, q.ground_truth_answer)
                 scores.append(score)

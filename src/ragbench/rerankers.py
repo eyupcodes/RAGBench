@@ -1,8 +1,9 @@
 """Reranking strategies for refining retrieved candidates in RAGBench."""
 
-from abc import ABC, abstractmethod
 import re
-from typing import Any, List, Optional
+from abc import ABC, abstractmethod
+from typing import Any
+
 from ragbench.models import RetrievalResult
 
 
@@ -13,9 +14,9 @@ class BaseReranker(ABC):
     def rerank(
         self,
         query: str,
-        results: List[RetrievalResult],
-        top_k: Optional[int] = None,
-    ) -> List[RetrievalResult]:
+        results: list[RetrievalResult],
+        top_k: int | None = None,
+    ) -> list[RetrievalResult]:
         """Rerank retrieval results for a given query."""
         pass
 
@@ -26,9 +27,9 @@ class NoOpReranker(BaseReranker):
     def rerank(
         self,
         query: str,
-        results: List[RetrievalResult],
-        top_k: Optional[int] = None,
-    ) -> List[RetrievalResult]:
+        results: list[RetrievalResult],
+        top_k: int | None = None,
+    ) -> list[RetrievalResult]:
         if not results:
             return []
         selected = results[:top_k] if top_k is not None else list(results)
@@ -44,9 +45,9 @@ class LexicalReranker(BaseReranker):
     def rerank(
         self,
         query: str,
-        results: List[RetrievalResult],
-        top_k: Optional[int] = None,
-    ) -> List[RetrievalResult]:
+        results: list[RetrievalResult],
+        top_k: int | None = None,
+    ) -> list[RetrievalResult]:
         if not results:
             return []
 
@@ -54,7 +55,7 @@ class LexicalReranker(BaseReranker):
         if not q_tokens:
             return NoOpReranker().rerank(query, results, top_k)
 
-        scored: List[RetrievalResult] = []
+        scored: list[RetrievalResult] = []
         for r in results:
             text_tokens = re.findall(r"\w+", r.chunk.text.lower())
             overlap_score = sum(text_tokens.count(tok) for tok in q_tokens)
@@ -73,8 +74,8 @@ class CrossEncoderReranker(BaseReranker):
 
     def __init__(
         self,
-        model_name: Optional[str] = None,
-        model: Optional[Any] = None,
+        model_name: str | None = None,
+        model: Any | None = None,
     ):
         self.model_name = model_name
         self._model = model
@@ -83,6 +84,7 @@ class CrossEncoderReranker(BaseReranker):
         if self._model is None and self.model_name is not None:
             try:
                 from sentence_transformers import CrossEncoder
+
                 self._model = CrossEncoder(self.model_name)
             except Exception:
                 self._model = None
@@ -90,17 +92,17 @@ class CrossEncoderReranker(BaseReranker):
     def rerank(
         self,
         query: str,
-        results: List[RetrievalResult],
-        top_k: Optional[int] = None,
-    ) -> List[RetrievalResult]:
+        results: list[RetrievalResult],
+        top_k: int | None = None,
+    ) -> list[RetrievalResult]:
         if not results:
             return []
 
         if self._model is not None:
             pairs = [[query, r.chunk.text] for r in results]
             raw_scores = self._model.predict(pairs)
-            scored: List[RetrievalResult] = []
-            for r, s in zip(results, raw_scores):
+            scored: list[RetrievalResult] = []
+            for r, s in zip(results, raw_scores, strict=True):
                 scored.append(RetrievalResult(chunk=r.chunk, score=float(s), rank=0))
             scored.sort(key=lambda x: x.score, reverse=True)
             selected = scored[:top_k] if top_k is not None else scored
@@ -112,8 +114,8 @@ class CrossEncoderReranker(BaseReranker):
 
 
 def get_reranker(
-    name: Optional[str] = None,
-    model_name: Optional[str] = None,
+    name: str | None = None,
+    model_name: str | None = None,
 ) -> BaseReranker:
     """Factory function for retrieving reranker instances."""
     if not name or name.strip().lower() in ["none", "noop"]:

@@ -1,7 +1,9 @@
 """Tests for command-line interface and table reporting."""
 
 import json
+
 import pytest
+
 from ragbench.cli import format_ascii_table, main, parse_args
 from ragbench.models import (
     BenchmarkReport,
@@ -48,7 +50,9 @@ def test_format_ascii_table(sample_report):
 
 
 def test_format_ascii_table_empty():
-    empty_report = BenchmarkReport(dataset_name="empty", num_documents=0, num_queries=0, results=[])
+    empty_report = BenchmarkReport(
+        dataset_name="empty", num_documents=0, num_queries=0, results=[]
+    )
     table_str = format_ascii_table(empty_report)
     assert "No benchmark results available." in table_str
 
@@ -71,19 +75,27 @@ def test_cli_main_success(tmp_path, capsys):
         ],
         "queries": [
             {"id": "q1", "query": "Python language", "relevant_doc_ids": ["doc1"]},
-        ]
+        ],
     }
     ds_file = tmp_path / "ds.json"
     ds_file.write_text(json.dumps(dataset_content), encoding="utf-8")
     out_file = tmp_path / "report.json"
 
-    exit_code = main([
-        "--dataset", str(ds_file),
-        "--chunkers", "fixed",
-        "--retrievers", "tfidf",
-        "--k-values", "1", "3",
-        "--output", str(out_file),
-    ])
+    exit_code = main(
+        [
+            "--dataset",
+            str(ds_file),
+            "--chunkers",
+            "fixed",
+            "--retrievers",
+            "tfidf",
+            "--k-values",
+            "1",
+            "3",
+            "--output",
+            str(out_file),
+        ]
+    )
 
     assert exit_code == 0
     captured = capsys.readouterr()
@@ -95,17 +107,22 @@ def test_cli_main_json_output(tmp_path, capsys):
     dataset_content = {
         "name": "json_test_ds",
         "documents": [{"id": "d1", "text": "Sample text"}],
-        "queries": [{"id": "q1", "query": "Sample", "relevant_doc_ids": ["d1"]}]
+        "queries": [{"id": "q1", "query": "Sample", "relevant_doc_ids": ["d1"]}],
     }
     ds_file = tmp_path / "ds_json.json"
     ds_file.write_text(json.dumps(dataset_content), encoding="utf-8")
 
-    exit_code = main([
-        "--dataset", str(ds_file),
-        "--chunkers", "fixed",
-        "--retrievers", "tfidf",
-        "--json"
-    ])
+    exit_code = main(
+        [
+            "--dataset",
+            str(ds_file),
+            "--chunkers",
+            "fixed",
+            "--retrievers",
+            "tfidf",
+            "--json",
+        ]
+    )
 
     assert exit_code == 0
     captured = capsys.readouterr()
@@ -118,11 +135,22 @@ def test_cli_hybrid_retriever(tmp_path, capsys):
     dataset_content = {
         "name": "hybrid_cli_ds",
         "documents": [{"id": "d1", "text": "Python programming language readability."}],
-        "queries": [{"id": "q1", "query": "Python", "relevant_doc_ids": ["d1"]}]
+        "queries": [{"id": "q1", "query": "Python", "relevant_doc_ids": ["d1"]}],
     }
     ds_file = tmp_path / "hybrid_ds.json"
     ds_file.write_text(json.dumps(dataset_content), encoding="utf-8")
-    exit_code = main(["--dataset", str(ds_file), "--chunkers", "fixed", "--retrievers", "hybrid", "--rrf-k", "30"])
+    exit_code = main(
+        [
+            "--dataset",
+            str(ds_file),
+            "--chunkers",
+            "fixed",
+            "--retrievers",
+            "hybrid",
+            "--rrf-k",
+            "30",
+        ]
+    )
     assert exit_code == 0
     captured = capsys.readouterr()
     assert "hybrid" in captured.out.lower()
@@ -138,17 +166,27 @@ def test_format_ascii_table_with_reranker(sample_report):
 def test_cli_reranker_option(tmp_path, capsys):
     dataset_content = {
         "name": "rerank_cli_ds",
-        "documents": [{"id": "d1", "text": "Machine learning and deep neural networks."}],
-        "queries": [{"id": "q1", "query": "neural networks", "relevant_doc_ids": ["d1"]}]
+        "documents": [
+            {"id": "d1", "text": "Machine learning and deep neural networks."}
+        ],
+        "queries": [
+            {"id": "q1", "query": "neural networks", "relevant_doc_ids": ["d1"]}
+        ],
     }
     ds_file = tmp_path / "rerank_ds.json"
     ds_file.write_text(json.dumps(dataset_content), encoding="utf-8")
-    exit_code = main([
-        "--dataset", str(ds_file),
-        "--chunkers", "fixed",
-        "--retrievers", "bm25",
-        "--reranker", "lexical",
-    ])
+    exit_code = main(
+        [
+            "--dataset",
+            str(ds_file),
+            "--chunkers",
+            "fixed",
+            "--retrievers",
+            "bm25",
+            "--reranker",
+            "lexical",
+        ]
+    )
     assert exit_code == 0
     captured = capsys.readouterr()
     assert "Reranker" in captured.out
@@ -159,16 +197,23 @@ def test_cli_multi_vector_models(tmp_path, capsys):
     dataset_content = {
         "name": "multi_vec_cli_ds",
         "documents": [{"id": "d1", "text": "Embeddings and vector search."}],
-        "queries": [{"id": "q1", "query": "embeddings", "relevant_doc_ids": ["d1"]}]
+        "queries": [{"id": "q1", "query": "embeddings", "relevant_doc_ids": ["d1"]}],
     }
     ds_file = tmp_path / "vec_ds.json"
     ds_file.write_text(json.dumps(dataset_content), encoding="utf-8")
-    exit_code = main([
-        "--dataset", str(ds_file),
-        "--chunkers", "fixed",
-        "--retrievers", "vector",
-        "--vector-models", "emb_alpha", "emb_beta",
-    ])
+    exit_code = main(
+        [
+            "--dataset",
+            str(ds_file),
+            "--chunkers",
+            "fixed",
+            "--retrievers",
+            "vector",
+            "--vector-models",
+            "emb_alpha",
+            "emb_beta",
+        ]
+    )
     assert exit_code == 0
     captured = capsys.readouterr()
     assert "emb_alpha" in captured.out

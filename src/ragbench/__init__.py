@@ -2,22 +2,22 @@
 
 __version__ = "0.4.0"
 
-from ragbench.models import (
-    Document,
-    Chunk,
-    Query,
-    BenchmarkDataset,
-    RetrievalResult,
-    BenchmarkConfig,
-    BenchmarkReport,
-    EvaluationMetrics,
-)
 from ragbench.benchmark import BenchmarkRunner
+from ragbench.models import (
+    BenchmarkConfig,
+    BenchmarkDataset,
+    BenchmarkReport,
+    Chunk,
+    Document,
+    EvaluationMetrics,
+    Query,
+    RetrievalResult,
+)
 from ragbench.rerankers import (
     BaseReranker,
-    NoOpReranker,
-    LexicalReranker,
     CrossEncoderReranker,
+    LexicalReranker,
+    NoOpReranker,
     get_reranker,
 )
 

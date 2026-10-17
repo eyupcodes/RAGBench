@@ -1,6 +1,7 @@
 """Tests for benchmark execution engine."""
 
 import pytest
+
 from ragbench.benchmark import BenchmarkRunner
 from ragbench.metrics import ExactMatchAnswerEvaluator
 from ragbench.models import (

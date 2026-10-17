@@ -2,16 +2,18 @@
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any
+
 from ragbench.models import BenchmarkDataset, Document, Query
 
 
 class DatasetLoadError(Exception):
     """Raised when dataset loading fails."""
+
     pass
 
 
-def _ensure_unique_ids(kind: str, ids: List[str]) -> None:
+def _ensure_unique_ids(kind: str, ids: list[str]) -> None:
     """Raise DatasetLoadError if any ID occurs more than once."""
     seen = set()
     duplicates = []
@@ -20,10 +22,12 @@ def _ensure_unique_ids(kind: str, ids: List[str]) -> None:
             duplicates.append(item_id)
         seen.add(item_id)
     if duplicates:
-        raise DatasetLoadError(f"Duplicate {kind} IDs: {', '.join(map(repr, duplicates))}")
+        raise DatasetLoadError(
+            f"Duplicate {kind} IDs: {', '.join(map(repr, duplicates))}"
+        )
 
 
-def load_dataset_from_dict(data: Dict[str, Any]) -> BenchmarkDataset:
+def load_dataset_from_dict(data: dict[str, Any]) -> BenchmarkDataset:
     """Load a BenchmarkDataset from a raw Python dictionary with schema validation."""
     if not isinstance(data, dict):
         raise DatasetLoadError("Dataset root must be a JSON object (dictionary)")
@@ -53,7 +57,7 @@ def load_dataset_from_dict(data: Dict[str, Any]) -> BenchmarkDataset:
         raise DatasetLoadError(f"Failed to parse dataset records: {e}") from e
 
 
-def load_dataset_from_json(file_path: Union[str, Path]) -> BenchmarkDataset:
+def load_dataset_from_json(file_path: str | Path) -> BenchmarkDataset:
     """Load a BenchmarkDataset from a JSON file."""
     path = Path(file_path)
     if not path.exists():
@@ -62,7 +66,7 @@ def load_dataset_from_json(file_path: Union[str, Path]) -> BenchmarkDataset:
         raise DatasetLoadError(f"Path is not a file: {path}")
 
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
         raise DatasetLoadError(f"Invalid JSON in {path}: {e}") from e
@@ -72,7 +76,7 @@ def load_dataset_from_json(file_path: Union[str, Path]) -> BenchmarkDataset:
     return load_dataset_from_dict(data)
 
 
-def load_queries_from_json(file_path: Union[str, Path]) -> List[Query]:
+def load_queries_from_json(file_path: str | Path) -> list[Query]:
     """Load queries list from a JSON file."""
     path = Path(file_path)
     if not path.exists():
@@ -81,7 +85,7 @@ def load_queries_from_json(file_path: Union[str, Path]) -> List[Query]:
         raise DatasetLoadError(f"Path is not a file: {path}")
 
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
         raise DatasetLoadError(f"Invalid JSON in {path}: {e}") from e
@@ -95,7 +99,9 @@ def load_queries_from_json(file_path: Union[str, Path]) -> List[Query]:
             raise DatasetLoadError("Queries dictionary must contain a 'queries' list")
         raw_queries = data["queries"]
     else:
-        raise DatasetLoadError("Queries JSON must be a list or object with 'queries' key")
+        raise DatasetLoadError(
+            "Queries JSON must be a list or object with 'queries' key"
+        )
 
     try:
         queries = [Query(**q) for q in raw_queries]
@@ -106,17 +112,15 @@ def load_queries_from_json(file_path: Union[str, Path]) -> List[Query]:
 
 
 def load_dataset_from_directory(
-    doc_dir: Union[str, Path],
-    queries_file: Union[str, Path],
-    dataset_name: str = "dir_dataset"
+    doc_dir: str | Path, queries_file: str | Path, dataset_name: str = "dir_dataset"
 ) -> BenchmarkDataset:
     """Load documents from individual text/markdown files and queries from a JSON file."""
     doc_path = Path(doc_dir)
     if not doc_path.exists() or not doc_path.is_dir():
         raise DatasetLoadError(f"Documents directory not found: {doc_path}")
 
-    documents: List[Document] = []
-    sources: Dict[str, Path] = {}
+    documents: list[Document] = []
+    sources: dict[str, Path] = {}
     for file_p in sorted(doc_path.glob("**/*")):
         if file_p.is_file() and file_p.suffix.lower() in [".txt", ".md", ".json"]:
             if file_p.suffix.lower() == ".json":
@@ -130,7 +134,11 @@ def load_dataset_from_directory(
             sources[doc_id] = file_p
             try:
                 content = file_p.read_text(encoding="utf-8")
-                documents.append(Document(id=doc_id, text=content, metadata={"source_path": str(file_p)}))
+                documents.append(
+                    Document(
+                        id=doc_id, text=content, metadata={"source_path": str(file_p)}
+                    )
+                )
             except Exception as e:
                 raise DatasetLoadError(f"Failed to read file {file_p}: {e}") from e
 
