@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `evaluate_retrieval_batch` raises `ValueError` when `query_results` and `queries` differ in length instead of silently truncating and deflating the metrics (#7).
 - `k_values` default in `evaluate_retrieval_batch` is no longer a shared mutable list (#7).
 - Dataset loaders now raise `DatasetLoadError` on duplicate document or query IDs instead of silently accepting them; the directory loader reports colliding file names such as `a/notes.md` and `b/notes.md` (#3).
+- `load_dataset_from_dict` raises `DatasetLoadError` instead of leaking a pydantic `ValidationError` for an invalid dataset name or description (#5).
 
 ## [0.4.0] - 2026-09-02
 
