@@ -33,13 +33,7 @@ class BaseRetriever(ABC):
         raw_results = self._search(query=query, top_k=top_k)
         results: list[RetrievalResult] = []
         for rank, (chunk, score) in enumerate(raw_results, start=1):
-            results.append(
-                RetrievalResult(
-                    chunk=chunk,
-                    score=float(score),
-                    rank=rank
-                )
-            )
+            results.append(RetrievalResult(chunk=chunk, score=float(score), rank=rank))
         return results
 
 
@@ -56,7 +50,9 @@ class PurePythonBM25:
         self.b = b
         self.corpus_size = len(corpus)
         self.doc_lens = [len(doc) for doc in corpus]
-        self.avgdl = sum(self.doc_lens) / self.corpus_size if self.corpus_size > 0 else 1.0
+        self.avgdl = (
+            sum(self.doc_lens) / self.corpus_size if self.corpus_size > 0 else 1.0
+        )
         self.doc_freqs: list[dict[str, int]] = []
         self.idf: dict[str, float] = {}
         self._calc_idf(corpus)
@@ -71,7 +67,9 @@ class PurePythonBM25:
 
         for word, freq in df.items():
             # Standard Lucene/Okapi smoothed IDF
-            self.idf[word] = math.log(1.0 + (self.corpus_size - freq + 0.5) / (freq + 0.5))
+            self.idf[word] = math.log(
+                1.0 + (self.corpus_size - freq + 0.5) / (freq + 0.5)
+            )
 
     def get_scores(self, query_tokens: list[str]) -> list[float]:
         scores = [0.0] * self.corpus_size
@@ -84,7 +82,9 @@ class PurePythonBM25:
                     tf = doc_freq[token]
                     doc_len = self.doc_lens[i]
                     numerator = tf * (self.k1 + 1.0)
-                    denominator = tf + self.k1 * (1.0 - self.b + self.b * (doc_len / self.avgdl))
+                    denominator = tf + self.k1 * (
+                        1.0 - self.b + self.b * (doc_len / self.avgdl)
+                    )
                     scores[i] += idf_val * (numerator / denominator)
         return scores
 
@@ -101,6 +101,7 @@ class BM25Retriever(BaseRetriever):
 
         try:
             from rank_bm25 import BM25Okapi
+
             self._bm25 = BM25Okapi(self.tokenized_corpus)
             self._is_rank_bm25 = True
         except ImportError:
@@ -116,7 +117,9 @@ class BM25Retriever(BaseRetriever):
             return []
 
         scores = self._bm25.get_scores(query_tokens)
-        ranked_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
+        ranked_indices = sorted(
+            range(len(scores)), key=lambda i: scores[i], reverse=True
+        )[:top_k]
 
         return [(self.chunks[i], scores[i]) for i in ranked_indices if scores[i] > 0.0]
 
@@ -171,7 +174,9 @@ class TFIDFVectorRetriever(BaseRetriever):
             sim = dot_product / (q_norm * self.doc_norms[i])
             scores.append(sim)
 
-        ranked_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
+        ranked_indices = sorted(
+            range(len(scores)), key=lambda i: scores[i], reverse=True
+        )[:top_k]
         return [(self.chunks[i], scores[i]) for i in ranked_indices if scores[i] > 0.0]
 
 
@@ -195,9 +200,12 @@ class VectorRetriever(BaseRetriever):
         if self.model_name is not None:
             try:
                 from sentence_transformers import SentenceTransformer
+
                 self._dense_model = SentenceTransformer(self.model_name)
                 texts = [c.text for c in self.chunks]
-                self._dense_embeddings = self._dense_model.encode(texts, normalize_embeddings=True)
+                self._dense_embeddings = self._dense_model.encode(
+                    texts, normalize_embeddings=True
+                )
                 return
             except Exception:
                 pass
@@ -207,6 +215,7 @@ class VectorRetriever(BaseRetriever):
     def _search(self, query: str, top_k: int) -> list[tuple[Chunk, float]]:
         if self._dense_model is not None and self._dense_embeddings is not None:
             import numpy as np
+
             q_emb = self._dense_model.encode([query], normalize_embeddings=True)[0]
             scores = np.dot(self._dense_embeddings, q_emb)
             ranked = np.argsort(-scores)[:top_k]
@@ -233,8 +242,10 @@ class HybridRetriever(BaseRetriever):
         pool_k = max(top_k * 3, 20)
         bm25_results = self._bm25._search(query, pool_k)
         tfidf_results = self._tfidf._search(query, pool_k)
+
         def rank_map(results):
             return {chunk.id: rank for rank, (chunk, _) in enumerate(results, start=1)}
+
         bm25_ranks = rank_map(bm25_results)
         tfidf_ranks = rank_map(tfidf_results)
         chunk_by_id = {c.id: c for c in self.chunks}

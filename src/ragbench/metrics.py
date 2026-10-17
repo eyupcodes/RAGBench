@@ -12,7 +12,9 @@ def _get_relevant_doc_ids(query: Query) -> set[str]:
     return set(query.relevant_doc_ids)
 
 
-def calculate_recall_at_k(results: list[RetrievalResult], relevant_ids: set[str], k: int) -> float:
+def calculate_recall_at_k(
+    results: list[RetrievalResult], relevant_ids: set[str], k: int
+) -> float:
     """
     Calculate Recall@K: proportion of relevant documents retrieved in top-k results.
     """
@@ -25,7 +27,9 @@ def calculate_recall_at_k(results: list[RetrievalResult], relevant_ids: set[str]
     return hits / len(relevant_ids)
 
 
-def calculate_precision_at_k(results: list[RetrievalResult], relevant_ids: set[str], k: int) -> float:
+def calculate_precision_at_k(
+    results: list[RetrievalResult], relevant_ids: set[str], k: int
+) -> float:
     """Calculate Precision@K: proportion of top-k retrieved documents that are relevant."""
     if k <= 0:
         return 0.0
@@ -64,7 +68,11 @@ class ExactMatchAnswerEvaluator(BaseAnswerEvaluator):
     """Binary exact match answer evaluator (case-insensitive, trimmed)."""
 
     def evaluate(self, generated_answer: str, ground_truth: str) -> float:
-        return 1.0 if generated_answer.strip().lower() == ground_truth.strip().lower() else 0.0
+        return (
+            1.0
+            if generated_answer.strip().lower() == ground_truth.strip().lower()
+            else 0.0
+        )
 
 
 class TokenOverlapAnswerEvaluator(BaseAnswerEvaluator):
@@ -131,7 +139,9 @@ def evaluate_retrieval_batch(
     mean_recall = {k: round(val / n_queries, 4) for k, val in recall_sums.items()}
     mean_precision = {k: round(val / n_queries, 4) for k, val in precision_sums.items()}
     mean_mrr = round(mrr_sum / n_queries, 4)
-    avg_latency = round(sum(latencies_ms) / len(latencies_ms), 2) if latencies_ms else 0.0
+    avg_latency = (
+        round(sum(latencies_ms) / len(latencies_ms), 2) if latencies_ms else 0.0
+    )
 
     answer_score = None
     if answer_evaluator and generated_answers and len(generated_answers) == n_queries:

@@ -14,7 +14,9 @@ class BaseChunker(ABC):
         if chunk_overlap < 0:
             raise ValueError(f"chunk_overlap cannot be negative, got {chunk_overlap}")
         if chunk_overlap >= chunk_size:
-            raise ValueError(f"chunk_overlap ({chunk_overlap}) must be strictly less than chunk_size ({chunk_size})")
+            raise ValueError(
+                f"chunk_overlap ({chunk_overlap}) must be strictly less than chunk_size ({chunk_size})"
+            )
 
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
@@ -62,7 +64,7 @@ class FixedSizeChunker(BaseChunker):
                             "start_char": start,
                             "end_char": end,
                             "chunker": "fixed",
-                        }
+                        },
                     )
                 )
                 chunk_idx += 1
@@ -86,10 +88,12 @@ class RecursiveCharacterChunker(BaseChunker):
         self,
         chunk_size: int = 500,
         chunk_overlap: int = 50,
-        separators: list[str] | None = None
+        separators: list[str] | None = None,
     ):
         super().__init__(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-        self.separators = separators if separators is not None else self.DEFAULT_SEPARATORS
+        self.separators = (
+            separators if separators is not None else self.DEFAULT_SEPARATORS
+        )
 
     def _split_text(self, text: str, separators: list[str]) -> list[str]:
         """Recursively split text using the first matching separator."""
@@ -106,7 +110,7 @@ class RecursiveCharacterChunker(BaseChunker):
                 break
             if sep in text:
                 separator = sep
-                new_separators = separators[i + 1:]
+                new_separators = separators[i + 1 :]
                 break
 
         if separator:
@@ -126,7 +130,7 @@ class RecursiveCharacterChunker(BaseChunker):
                     good_splits.extend(sub_splits)
                 else:
                     for j in range(0, len(s), self.chunk_size - self.chunk_overlap):
-                        good_splits.append(s[j:j + self.chunk_size])
+                        good_splits.append(s[j : j + self.chunk_size])
 
         current_chunk: list[str] = []
         current_length = 0
@@ -153,10 +157,16 @@ class RecursiveCharacterChunker(BaseChunker):
                         else:
                             break
                     current_chunk = overlap_chunk
-                    current_length = sum(len(p) for p in current_chunk) + (len(separator) * (len(current_chunk) - 1) if current_chunk else 0)
+                    current_length = sum(len(p) for p in current_chunk) + (
+                        len(separator) * (len(current_chunk) - 1)
+                        if current_chunk
+                        else 0
+                    )
 
                 current_chunk.append(piece)
-                current_length += len(piece) + (len(separator) if len(current_chunk) > 1 else 0)
+                current_length += len(piece) + (
+                    len(separator) if len(current_chunk) > 1 else 0
+                )
 
         if current_chunk:
             joined = separator.join(current_chunk).strip()
@@ -184,7 +194,7 @@ class RecursiveCharacterChunker(BaseChunker):
                         metadata={
                             **document.metadata,
                             "chunker": "recursive",
-                        }
+                        },
                     )
                 )
 
@@ -192,16 +202,16 @@ class RecursiveCharacterChunker(BaseChunker):
 
 
 def get_chunker(
-    name: str,
-    chunk_size: int = 500,
-    chunk_overlap: int = 50
+    name: str, chunk_size: int = 500, chunk_overlap: int = 50
 ) -> BaseChunker:
     """Factory function for retrieving a chunker instance by name."""
     clean_name = name.lower().strip()
     if clean_name == "fixed":
         return FixedSizeChunker(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
     elif clean_name in ["recursive", "recursive_character"]:
-        return RecursiveCharacterChunker(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+        return RecursiveCharacterChunker(
+            chunk_size=chunk_size, chunk_overlap=chunk_overlap
+        )
     else:
         raise ValueError(
             f"Unknown chunking strategy '{name}'. Supported strategies: 'fixed', 'recursive'"

@@ -90,7 +90,7 @@ config = BenchmarkConfig(
     retrieval_strategies=["bm25", "tfidf"],
     k_values=[1, 3, 5],
     chunk_size=300,
-    chunk_overlap=40
+    chunk_overlap=40,
 )
 
 # 3. Benchmark'ı çalıştır

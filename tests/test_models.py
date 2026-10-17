@@ -33,7 +33,7 @@ def test_chunk_creation_valid():
         doc_id="doc_1",
         text="Sample chunk",
         chunk_index=0,
-        metadata={"start": 0}
+        metadata={"start": 0},
     )
     assert chunk.id == "doc_1_chunk_0"
     assert chunk.doc_id == "doc_1"
@@ -51,7 +51,7 @@ def test_benchmark_dataset():
     dataset = BenchmarkDataset(
         name="test_ds",
         documents=[Document(id="d1", text="text 1")],
-        queries=[Query(id="q1", query="query 1", relevant_doc_ids=["d1"])]
+        queries=[Query(id="q1", query="query 1", relevant_doc_ids=["d1"])],
     )
     assert dataset.name == "test_ds"
     assert len(dataset.documents) == 1

@@ -38,13 +38,20 @@ def test_calculate_precision_at_k(sample_retrieval_results):
 
     assert calculate_precision_at_k(sample_retrieval_results, relevant, k=1) == 1.0
     assert calculate_precision_at_k(sample_retrieval_results, relevant, k=2) == 0.5
-    assert pytest.approx(calculate_precision_at_k(sample_retrieval_results, relevant, k=3), 0.01) == 0.666
+    assert (
+        pytest.approx(
+            calculate_precision_at_k(sample_retrieval_results, relevant, k=3), 0.01
+        )
+        == 0.666
+    )
 
 
 def test_calculate_mrr(sample_retrieval_results):
     assert calculate_mrr(sample_retrieval_results, {"doc_1"}) == 1.0
     assert calculate_mrr(sample_retrieval_results, {"doc_2"}) == 0.5
-    assert pytest.approx(calculate_mrr(sample_retrieval_results, {"doc_3"}), 0.01) == 0.333
+    assert (
+        pytest.approx(calculate_mrr(sample_retrieval_results, {"doc_3"}), 0.01) == 0.333
+    )
     assert calculate_mrr(sample_retrieval_results, {"doc_999"}) == 0.0
 
 
@@ -64,8 +71,18 @@ def test_token_overlap_evaluator():
 
 def test_evaluate_retrieval_batch(sample_retrieval_results):
     queries = [
-        Query(id="q1", query="Query 1", relevant_doc_ids=["doc_1"], ground_truth_answer="Ans 1"),
-        Query(id="q2", query="Query 2", relevant_doc_ids=["doc_2"], ground_truth_answer="Ans 2"),
+        Query(
+            id="q1",
+            query="Query 1",
+            relevant_doc_ids=["doc_1"],
+            ground_truth_answer="Ans 1",
+        ),
+        Query(
+            id="q2",
+            query="Query 2",
+            relevant_doc_ids=["doc_2"],
+            ground_truth_answer="Ans 2",
+        ),
     ]
     query_results = [sample_retrieval_results, sample_retrieval_results]
     latencies = [10.0, 20.0]
@@ -86,7 +103,9 @@ def test_evaluate_retrieval_batch(sample_retrieval_results):
     assert metrics.answer_score == 0.5
 
 
-def test_evaluate_retrieval_batch_rejects_mismatched_result_count(sample_retrieval_results):
+def test_evaluate_retrieval_batch_rejects_mismatched_result_count(
+    sample_retrieval_results,
+):
     queries = [
         Query(id="q1", query="Query 1", relevant_doc_ids=["doc_1"]),
         Query(id="q2", query="Query 2", relevant_doc_ids=["doc_2"]),

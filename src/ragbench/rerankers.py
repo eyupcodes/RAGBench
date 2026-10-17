@@ -84,6 +84,7 @@ class CrossEncoderReranker(BaseReranker):
         if self._model is None and self.model_name is not None:
             try:
                 from sentence_transformers import CrossEncoder
+
                 self._model = CrossEncoder(self.model_name)
             except Exception:
                 self._model = None

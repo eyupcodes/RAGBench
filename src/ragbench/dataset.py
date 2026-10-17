@@ -9,6 +9,7 @@ from ragbench.models import BenchmarkDataset, Document, Query
 
 class DatasetLoadError(Exception):
     """Raised when dataset loading fails."""
+
     pass
 
 
@@ -21,7 +22,9 @@ def _ensure_unique_ids(kind: str, ids: list[str]) -> None:
             duplicates.append(item_id)
         seen.add(item_id)
     if duplicates:
-        raise DatasetLoadError(f"Duplicate {kind} IDs: {', '.join(map(repr, duplicates))}")
+        raise DatasetLoadError(
+            f"Duplicate {kind} IDs: {', '.join(map(repr, duplicates))}"
+        )
 
 
 def load_dataset_from_dict(data: dict[str, Any]) -> BenchmarkDataset:
@@ -96,7 +99,9 @@ def load_queries_from_json(file_path: str | Path) -> list[Query]:
             raise DatasetLoadError("Queries dictionary must contain a 'queries' list")
         raw_queries = data["queries"]
     else:
-        raise DatasetLoadError("Queries JSON must be a list or object with 'queries' key")
+        raise DatasetLoadError(
+            "Queries JSON must be a list or object with 'queries' key"
+        )
 
     try:
         queries = [Query(**q) for q in raw_queries]
@@ -107,9 +112,7 @@ def load_queries_from_json(file_path: str | Path) -> list[Query]:
 
 
 def load_dataset_from_directory(
-    doc_dir: str | Path,
-    queries_file: str | Path,
-    dataset_name: str = "dir_dataset"
+    doc_dir: str | Path, queries_file: str | Path, dataset_name: str = "dir_dataset"
 ) -> BenchmarkDataset:
     """Load documents from individual text/markdown files and queries from a JSON file."""
     doc_path = Path(doc_dir)
@@ -131,7 +134,11 @@ def load_dataset_from_directory(
             sources[doc_id] = file_p
             try:
                 content = file_p.read_text(encoding="utf-8")
-                documents.append(Document(id=doc_id, text=content, metadata={"source_path": str(file_p)}))
+                documents.append(
+                    Document(
+                        id=doc_id, text=content, metadata={"source_path": str(file_p)}
+                    )
+                )
             except Exception as e:
                 raise DatasetLoadError(f"Failed to read file {file_p}: {e}") from e
 

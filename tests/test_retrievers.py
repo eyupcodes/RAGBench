@@ -1,4 +1,4 @@
-﻿"""Tests for retrieval strategies."""
+"""Tests for retrieval strategies."""
 
 import pytest
 
@@ -20,19 +20,19 @@ def sample_chunks():
             id="doc_py_0",
             doc_id="doc_py",
             text="Python is a widely used high-level programming language known for readability.",
-            chunk_index=0
+            chunk_index=0,
         ),
         Chunk(
             id="doc_rust_0",
             doc_id="doc_rust",
             text="Rust is a systems language emphasizing memory safety and thread concurrency without garbage collection.",
-            chunk_index=0
+            chunk_index=0,
         ),
         Chunk(
             id="doc_db_0",
             doc_id="doc_db",
             text="PostgreSQL is an open-source relational database management system emphasizing extensibility and SQL compliance.",
-            chunk_index=0
+            chunk_index=0,
         ),
     ]
 
@@ -41,7 +41,7 @@ def test_pure_python_bm25_scoring():
     corpus = [
         ["python", "programming", "language"],
         ["rust", "memory", "safety"],
-        ["postgresql", "relational", "database"]
+        ["postgresql", "relational", "database"],
     ]
     bm25 = PurePythonBM25(corpus)
     scores = bm25.get_scores(["memory", "safety"])

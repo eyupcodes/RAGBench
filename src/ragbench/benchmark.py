@@ -101,7 +101,9 @@ class BenchmarkRunner:
                     t0 = time.perf_counter()
                     ret_res = retriever.retrieve(query=query.query, top_k=candidate_k)
                     if use_reranker:
-                        ret_res = reranker.rerank(query=query.query, results=ret_res, top_k=max_k)
+                        ret_res = reranker.rerank(
+                            query=query.query, results=ret_res, top_k=max_k
+                        )
                     t1 = time.perf_counter()
 
                     latencies.append((t1 - t0) * 1000.0)
