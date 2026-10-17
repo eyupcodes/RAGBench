@@ -101,7 +101,16 @@ def evaluate_retrieval_batch(
     answer_evaluator: BaseAnswerEvaluator | None = None,
     generated_answers: list[str] | None = None,
 ) -> EvaluationMetrics:
-    """Calculate aggregate benchmark metrics across all queries."""
+    """Calculate aggregate benchmark metrics across all queries.
+
+    Raises ``ValueError`` if ``query_results`` does not have one entry per query,
+    since zipping them would silently drop queries from the averages.
+    """
+    if len(query_results) != len(queries):
+        raise ValueError(
+            f"query_results has {len(query_results)} entries "
+            f"but there are {len(queries)} queries"
+        )
     if k_values is None:
         k_values = [1, 3, 5, 10]
     if not queries:
@@ -112,7 +121,7 @@ def evaluate_retrieval_batch(
     precision_sums: dict[int, float] = {k: 0.0 for k in k_values}
     mrr_sum = 0.0
 
-    for query, results in zip(queries, query_results, strict=False):
+    for query, results in zip(queries, query_results, strict=True):
         rel_ids = _get_relevant_doc_ids(query)
         for k in k_values:
             recall_sums[k] += calculate_recall_at_k(results, rel_ids, k)

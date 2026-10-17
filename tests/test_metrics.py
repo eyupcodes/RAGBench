@@ -84,3 +84,15 @@ def test_evaluate_retrieval_batch(sample_retrieval_results):
     assert metrics.mrr == 0.75
     assert metrics.avg_latency_ms == 15.0
     assert metrics.answer_score == 0.5
+
+
+def test_evaluate_retrieval_batch_rejects_mismatched_result_count(sample_retrieval_results):
+    queries = [
+        Query(id="q1", query="Query 1", relevant_doc_ids=["doc_1"]),
+        Query(id="q2", query="Query 2", relevant_doc_ids=["doc_2"]),
+    ]
+    with pytest.raises(ValueError, match="1 entries but there are 2 queries"):
+        evaluate_retrieval_batch(
+            query_results=[sample_retrieval_results],
+            queries=queries,
+        )
