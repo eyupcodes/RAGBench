@@ -1,6 +1,6 @@
 """RAGBench: A modular benchmark toolkit for RAG retrieval and chunking strategies."""
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 from ragbench.benchmark import BenchmarkRunner
 from ragbench.models import (
