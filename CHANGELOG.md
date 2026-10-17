@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-17
+
 ### Added
 - `ruff format --check` and `ruff check` steps in CI, with the existing findings fixed (#7).
 
@@ -14,27 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `evaluate_retrieval_batch` raises `ValueError` when `query_results` and `queries` differ in length instead of silently truncating and deflating the metrics (#7).
 - `k_values` default in `evaluate_retrieval_batch` is no longer a shared mutable list (#7).
 - Dataset loaders now raise `DatasetLoadError` on duplicate document or query IDs instead of silently accepting them; the directory loader reports colliding file names such as `a/notes.md` and `b/notes.md` (#3).
-
-## [0.1.0] - 2026-09-01
-
-### Added
-- **Dataset Loader**: Support for loading documents and test queries from structured JSON files and directories.
-- **Chunking Strategies**:
-  - `FixedSizeChunker`: Character-level chunking with configurable overlap.
-  - `RecursiveCharacterChunker`: Hierarchical splitting on natural structural boundaries (paragraphs, sentences, words).
-- **Retrieval Strategies**:
-  - `BM25Retriever`: Okapi BM25 implementation with pure Python fallback.
-  - `TFIDFVectorRetriever`: Deterministic cosine-similarity vector retrieval with zero external dependencies.
-  - `VectorRetriever`: Dense embedding retrieval using sentence-transformers with automatic fallback.
-- **Evaluation Metrics**:
-  - Recall@K and Precision@K for arbitrary K thresholds.
-  - Mean Reciprocal Rank (MRR).
-  - Retrieval latency tracking in milliseconds.
-  - Answer evaluation hooks (`ExactMatchAnswerEvaluator`, `TokenOverlapAnswerEvaluator`).
-- **CLI & Reporting**:
-  - Command-line runner `ragbench` with configurable arguments.
-  - Formatted ASCII comparison table and JSON export options.
-  - Comprehensive unit and integration test suite with 90% test coverage.
+- `load_dataset_from_dict` raises `DatasetLoadError` instead of leaking a pydantic `ValidationError` for an invalid dataset name or description (#5).
 
 ## [0.4.0] - 2026-09-02
 
@@ -59,3 +41,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Hybrid Retrieval (RRF)**: `HybridRetriever` combining BM25 and TF-IDF via Reciprocal Rank Fusion (`rrf_k` default 60). Accessible as `hybrid`, `rrf`, `hybrid_rrf`.
 - **BenchmarkConfig**: New `rrf_k` field for tuning RRF constant.
 - **CLI**: `--rrf-k` flag and `hybrid` retriever option.
+
+## [0.1.0] - 2026-09-01
+
+### Added
+- **Dataset Loader**: Support for loading documents and test queries from structured JSON files and directories.
+- **Chunking Strategies**:
+  - `FixedSizeChunker`: Character-level chunking with configurable overlap.
+  - `RecursiveCharacterChunker`: Hierarchical splitting on natural structural boundaries (paragraphs, sentences, words).
+- **Retrieval Strategies**:
+  - `BM25Retriever`: Okapi BM25 implementation with pure Python fallback.
+  - `TFIDFVectorRetriever`: Deterministic cosine-similarity vector retrieval with zero external dependencies.
+  - `VectorRetriever`: Dense embedding retrieval using sentence-transformers with automatic fallback.
+- **Evaluation Metrics**:
+  - Recall@K and Precision@K for arbitrary K thresholds.
+  - Mean Reciprocal Rank (MRR).
+  - Retrieval latency tracking in milliseconds.
+  - Answer evaluation hooks (`ExactMatchAnswerEvaluator`, `TokenOverlapAnswerEvaluator`).
+- **CLI & Reporting**:
+  - Command-line runner `ragbench` with configurable arguments.
+  - Formatted ASCII comparison table and JSON export options.
+  - Comprehensive unit and integration test suite with 90% test coverage.
