@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `--json --output` no longer prints "Report saved to ..." on stdout, so the JSON can be piped; the notice goes to stderr (#14).
+- Unknown chunking/retrieval strategies, invalid chunk settings and unwritable `--output` paths print `Error: ...` and exit 1 instead of a traceback; `--k-values`, `--chunk-size`, `--chunk-overlap` and `--rrf-k` are validated (#14).
+
 ### Added
 - `calculate_ndcg_at_k` and `calculate_hit_at_k`; `EvaluationMetrics` now carries `ndcg_at_k` and `hit_at_k`, and the ASCII report shows an `nDCG@<max K>` column (#12).
 

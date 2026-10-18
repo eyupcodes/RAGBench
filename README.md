@@ -72,6 +72,8 @@ JSON formatında çıktı almak veya dosyaya kaydetmek için:
 ragbench --dataset examples/data/sample_tech_docs.json --json --output report.json
 ```
 
+`--json` yazdığı stdout'u yalnızca JSON olarak tutar ("Report saved" bildirimi stderr'e gider), bu yüzden doğrudan `jq`'ya yönlendirilebilir. Geçersiz seçenekler (bilinmeyen strateji, `--chunk-overlap >= --chunk-size`, yazılamayan `--output`) traceback yerine `Error: ...` mesajı ve çıkış kodu 1 verir; `--k-values`, `--chunk-size` ve `--rrf-k` pozitif, `--chunk-overlap` negatif olmayan tam sayı olmalıdır (çıkış kodu 2).
+
 ---
 
 ### Python API Olarak Kullanım
