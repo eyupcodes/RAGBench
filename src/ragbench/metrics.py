@@ -1,5 +1,6 @@
 """Evaluation metrics and answer evaluation hooks for RAGBench."""
 
+import math
 import re
 from abc import ABC, abstractmethod
 from collections import Counter
@@ -41,6 +42,39 @@ def calculate_precision_at_k(
     retrieved_doc_ids = {r.chunk.doc_id for r in top_k_results}
     hits = len(retrieved_doc_ids.intersection(relevant_ids))
     return hits / len(top_k_results)
+
+
+def calculate_hit_at_k(
+    results: list[RetrievalResult], relevant_ids: set[str], k: int
+) -> float:
+    """Calculate Hit@K: 1.0 if any relevant document appears in the top-k, else 0.0."""
+    if k <= 0 or not relevant_ids:
+        return 0.0
+    return 1.0 if any(r.chunk.doc_id in relevant_ids for r in results[:k]) else 0.0
+
+
+def calculate_ndcg_at_k(
+    results: list[RetrievalResult], relevant_ids: set[str], k: int
+) -> float:
+    """Calculate nDCG@K with binary relevance.
+
+    Several chunks can come from one document, so a relevant document earns its gain
+    once, at the rank of its best-ranked chunk. The ideal ranking places
+    ``min(len(relevant_ids), k)`` relevant documents first.
+    """
+    if k <= 0 or not relevant_ids:
+        return 0.0
+
+    seen: set[str] = set()
+    dcg = 0.0
+    for position, res in enumerate(results[:k], start=1):
+        doc_id = res.chunk.doc_id
+        if doc_id in relevant_ids and doc_id not in seen:
+            seen.add(doc_id)
+            dcg += 1.0 / math.log2(position + 1)
+
+    ideal = sum(1.0 / math.log2(i + 1) for i in range(1, min(len(relevant_ids), k) + 1))
+    return dcg / ideal
 
 
 def calculate_mrr(results: list[RetrievalResult], relevant_ids: set[str]) -> float:

@@ -1,11 +1,15 @@
 """Tests for evaluation metrics and answer evaluation hooks."""
 
+import math
+
 import pytest
 
 from ragbench.metrics import (
     ExactMatchAnswerEvaluator,
     TokenOverlapAnswerEvaluator,
+    calculate_hit_at_k,
     calculate_mrr,
+    calculate_ndcg_at_k,
     calculate_precision_at_k,
     calculate_recall_at_k,
     evaluate_retrieval_batch,
@@ -44,6 +48,54 @@ def test_calculate_precision_at_k(sample_retrieval_results):
         )
         == 0.666
     )
+
+
+def test_calculate_hit_at_k(sample_retrieval_results):
+    assert calculate_hit_at_k(sample_retrieval_results, {"doc_3"}, k=2) == 0.0
+    assert calculate_hit_at_k(sample_retrieval_results, {"doc_3"}, k=3) == 1.0
+    assert calculate_hit_at_k(sample_retrieval_results, set(), k=3) == 0.0
+    assert calculate_hit_at_k(sample_retrieval_results, {"doc_1"}, k=0) == 0.0
+
+
+def test_calculate_ndcg_at_k_ideal_ranking(sample_retrieval_results):
+    assert calculate_ndcg_at_k(sample_retrieval_results, {"doc_1", "doc_2"}, 3) == 1.0
+    assert calculate_ndcg_at_k(sample_retrieval_results, {"doc_1"}, 1) == 1.0
+
+
+def test_calculate_ndcg_at_k_penalizes_late_hits(sample_retrieval_results):
+    # one relevant doc at rank 3: DCG = 1/log2(4) = 0.5, ideal DCG = 1
+    assert calculate_ndcg_at_k(sample_retrieval_results, {"doc_3"}, 3) == pytest.approx(
+        0.5
+    )
+    # relevant docs at ranks 1 and 3 out of 2: (1 + 0.5) / (1 + 1/log2(3))
+    expected = 1.5 / (1 + 1 / math.log2(3))
+    assert calculate_ndcg_at_k(
+        sample_retrieval_results, {"doc_1", "doc_3"}, 3
+    ) == pytest.approx(expected)
+
+
+def test_calculate_ndcg_at_k_cuts_off_at_k(sample_retrieval_results):
+    assert calculate_ndcg_at_k(sample_retrieval_results, {"doc_3"}, 2) == 0.0
+
+
+def test_calculate_ndcg_at_k_counts_a_document_once():
+    chunks = [
+        RetrievalResult(
+            chunk=Chunk(id=f"a_c{i}", doc_id="a", text="t", chunk_index=i),
+            score=1.0 - i / 10,
+            rank=i + 1,
+        )
+        for i in range(3)
+    ]
+    assert calculate_ndcg_at_k(chunks, {"a", "b"}, 3) == pytest.approx(
+        1.0 / (1 + 1 / math.log2(3))
+    )
+
+
+def test_calculate_ndcg_at_k_degenerate_inputs(sample_retrieval_results):
+    assert calculate_ndcg_at_k(sample_retrieval_results, set(), 3) == 0.0
+    assert calculate_ndcg_at_k(sample_retrieval_results, {"doc_1"}, 0) == 0.0
+    assert calculate_ndcg_at_k([], {"doc_1"}, 3) == 0.0
 
 
 def test_calculate_mrr(sample_retrieval_results):
