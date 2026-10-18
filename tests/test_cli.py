@@ -49,6 +49,21 @@ def test_format_ascii_table(sample_report):
     assert "0.750" in table_str
 
 
+def test_format_ascii_table_shows_ndcg_when_available(sample_report):
+    for res in sample_report.results:
+        res.metrics.ndcg_at_k = {1: 0.5, 3: 0.8155, 5: 0.9}
+
+    lines = format_ascii_table(sample_report).splitlines()
+    header = next(line for line in lines if line.startswith("Chunking"))
+    assert "nDCG@5" in header
+    assert header.index("MRR") < header.index("nDCG@5") < header.index("Lat(ms)")
+    assert "0.900" in next(line for line in lines if line.startswith("fixed"))
+
+
+def test_format_ascii_table_omits_ndcg_without_data(sample_report):
+    assert "nDCG" not in format_ascii_table(sample_report)
+
+
 def test_format_ascii_table_empty():
     empty_report = BenchmarkReport(
         dataset_name="empty", num_documents=0, num_queries=0, results=[]
