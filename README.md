@@ -10,7 +10,7 @@ A modular, lightweight benchmark toolkit for systematically comparing **chunking
 
 - **Chunking Stratejileri**: Fixed-size windowing vs. Recursive structural boundaries.
 - **Retrieval Stratejileri**: Okapi BM25 keyword matching vs. Sparse TF-IDF cosine vs. Dense sentence-transformer embeddings vs. Hybrid RRF fusion.
-- **Doğruluk ve Hız Metrikleri**: Recall@K, Precision@K, MRR (Mean Reciprocal Rank), query latency (ms) ve isteğe bağlı answer generation evaluation hooks.
+- **Doğruluk ve Hız Metrikleri**: Recall@K, Precision@K, Hit@K, nDCG@K, MRR (Mean Reciprocal Rank), query latency (ms) ve isteğe bağlı answer generation evaluation hooks.
 
 ## 2. Neden Kullanılır? (Why Use It)
 
@@ -57,12 +57,12 @@ ragbench --dataset examples/data/sample_tech_docs.json --chunkers fixed recursiv
  RAGBench Evaluation Report: tech_knowledge_base
  Documents: 5 | Queries: 5
 ========================================================================================
-Chunking     | Retrieval    | Chunks | R@1   | R@3   | R@5   | MRR    | Lat(ms)
-----------------------------------------------------------------------------
-fixed        | bm25         | 5      | 1.000 | 1.000 | 1.000 | 1.000  | 0.11   
-fixed        | tfidf        | 5      | 1.000 | 1.000 | 1.000 | 1.000  | 0.02   
-recursive    | bm25         | 5      | 1.000 | 1.000 | 1.000 | 1.000  | 0.06   
-recursive    | tfidf        | 5      | 1.000 | 1.000 | 1.000 | 1.000  | 0.01   
+Chunking     | Retrieval    | Chunks | R@1  | R@3  | R@5  | MRR    | nDCG@5  | Lat(ms)
+--------------------------------------------------------------------------------------
+fixed        | bm25         | 5      | 1.000 | 1.000 | 1.000 | 1.000  | 1.000   | 0.19   
+fixed        | tfidf        | 5      | 1.000 | 1.000 | 1.000 | 1.000  | 1.000   | 0.03   
+recursive    | bm25         | 5      | 1.000 | 1.000 | 1.000 | 1.000  | 1.000   | 0.21   
+recursive    | tfidf        | 5      | 1.000 | 1.000 | 1.000 | 1.000  | 1.000   | 0.04   
 ========================================================================================
 ```
 
@@ -166,6 +166,7 @@ pytest --cov=ragbench --cov-report=term-missing
 - [x] V1 — BM25 (Okapi & pure-Python fallback)
 - [x] V1 — Vector retrieval (TF-IDF cosine & SentenceTransformers)
 - [x] V1 — Evaluation metrics (Recall@K, Precision@K, MRR, Latency)
+- [x] V2 — Rank-aware metrics (nDCG@K, Hit@K)
 - [x] V1 — Answer evaluation hook (Token overlap / Exact match)
 - [x] V1 — CLI & ASCII report generator
 - [x] V2 — Hybrid retrieval (RRF / Reciprocal Rank Fusion)

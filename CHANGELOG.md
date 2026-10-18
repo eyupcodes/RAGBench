@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `calculate_ndcg_at_k` and `calculate_hit_at_k`; `EvaluationMetrics` now carries `ndcg_at_k` and `hit_at_k`, and the ASCII report shows an `nDCG@<max K>` column (#12).
+
 ## [0.5.0] - 2026-10-17
 
 ### Added
