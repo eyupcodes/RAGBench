@@ -273,3 +273,56 @@ def test_cli_json_with_output_keeps_stdout_pure_json(tiny_dataset, tmp_path, cap
     assert json.loads(captured.out)["dataset_name"] == "tiny"
     assert "Report saved to" in captured.err
     assert out_file.exists()
+
+
+@pytest.mark.parametrize(
+    ("extra", "message"),
+    [
+        (["-c", "bogus"], "Unknown chunking strategy 'bogus'"),
+        (["-r", "nope"], "Unknown retrieval strategy 'nope'"),
+        (["--chunk-size", "10", "--chunk-overlap", "20"], "chunk_overlap"),
+    ],
+)
+def test_cli_invalid_strategy_options_report_an_error(
+    tiny_dataset, capsys, extra, message
+):
+    base = ["-d", str(tiny_dataset), "-c", "fixed", "-r", "tfidf"]
+
+    exit_code = main(base + extra)
+
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    assert captured.err.startswith("Error: ")
+    assert message in captured.err
+    assert captured.out == ""
+
+
+def test_cli_unwritable_output_reports_an_error(tiny_dataset, tmp_path, capsys):
+    blocker = tmp_path / "blocker"
+    blocker.write_text("not a directory", encoding="utf-8")
+
+    exit_code = main(
+        ["-d", str(tiny_dataset), "-c", "fixed", "-r", "tfidf"]
+        + ["-o", str(blocker / "report.json")]
+    )
+
+    assert exit_code == 1
+    assert "Error: cannot write report" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "option",
+    [
+        ["-k", "0"],
+        ["-k", "1", "-3"],
+        ["--chunk-size", "0"],
+        ["--chunk-overlap", "-1"],
+        ["--rrf-k", "0"],
+    ],
+)
+def test_cli_rejects_non_positive_numeric_options(tiny_dataset, capsys, option):
+    with pytest.raises(SystemExit) as excinfo:
+        main(["-d", str(tiny_dataset)] + option)
+
+    assert excinfo.value.code == 2
+    assert "must be" in capsys.readouterr().err
