@@ -240,3 +240,36 @@ def test_cli_main_missing_dataset_file(capsys):
     assert exit_code == 1
     captured = capsys.readouterr()
     assert "Error: Dataset file not found" in captured.err
+
+
+@pytest.fixture
+def tiny_dataset(tmp_path):
+    path = tmp_path / "tiny.json"
+    path.write_text(
+        json.dumps(
+            {
+                "name": "tiny",
+                "documents": [{"id": "d1", "text": "Sample text"}],
+                "queries": [
+                    {"id": "q1", "query": "Sample", "relevant_doc_ids": ["d1"]}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_cli_json_with_output_keeps_stdout_pure_json(tiny_dataset, tmp_path, capsys):
+    out_file = tmp_path / "report.json"
+
+    exit_code = main(
+        ["-d", str(tiny_dataset), "-c", "fixed", "-r", "tfidf", "--json"]
+        + ["-o", str(out_file)]
+    )
+
+    assert exit_code == 0
+    captured = capsys.readouterr()
+    assert json.loads(captured.out)["dataset_name"] == "tiny"
+    assert "Report saved to" in captured.err
+    assert out_file.exists()

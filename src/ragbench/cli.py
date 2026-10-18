@@ -205,7 +205,7 @@ def main(args: list[str] | None = None) -> int:
         out_path = Path(parsed.output)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(report.model_dump_json(indent=2), encoding="utf-8")
-        print(f"Report saved to {out_path}")
+        print(f"Report saved to {out_path}", file=sys.stderr)
 
     return 0
 
