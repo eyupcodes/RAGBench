@@ -161,6 +161,8 @@ def evaluate_retrieval_batch(
     n_queries = len(queries)
     recall_sums: dict[int, float] = {k: 0.0 for k in k_values}
     precision_sums: dict[int, float] = {k: 0.0 for k in k_values}
+    ndcg_sums: dict[int, float] = {k: 0.0 for k in k_values}
+    hit_sums: dict[int, float] = {k: 0.0 for k in k_values}
     mrr_sum = 0.0
 
     for query, results in zip(queries, query_results, strict=True):
@@ -168,10 +170,14 @@ def evaluate_retrieval_batch(
         for k in k_values:
             recall_sums[k] += calculate_recall_at_k(results, rel_ids, k)
             precision_sums[k] += calculate_precision_at_k(results, rel_ids, k)
+            ndcg_sums[k] += calculate_ndcg_at_k(results, rel_ids, k)
+            hit_sums[k] += calculate_hit_at_k(results, rel_ids, k)
         mrr_sum += calculate_mrr(results, rel_ids)
 
     mean_recall = {k: round(val / n_queries, 4) for k, val in recall_sums.items()}
     mean_precision = {k: round(val / n_queries, 4) for k, val in precision_sums.items()}
+    mean_ndcg = {k: round(val / n_queries, 4) for k, val in ndcg_sums.items()}
+    mean_hit = {k: round(val / n_queries, 4) for k, val in hit_sums.items()}
     mean_mrr = round(mrr_sum / n_queries, 4)
     avg_latency = (
         round(sum(latencies_ms) / len(latencies_ms), 2) if latencies_ms else 0.0
@@ -190,6 +196,8 @@ def evaluate_retrieval_batch(
     return EvaluationMetrics(
         recall_at_k=mean_recall,
         precision_at_k=mean_precision,
+        ndcg_at_k=mean_ndcg,
+        hit_at_k=mean_hit,
         mrr=mean_mrr,
         avg_latency_ms=avg_latency,
         answer_score=answer_score,

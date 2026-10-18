@@ -104,6 +104,8 @@ class EvaluationMetrics(BaseModel):
 
     recall_at_k: dict[int, float] = Field(default_factory=dict)
     precision_at_k: dict[int, float] = Field(default_factory=dict)
+    ndcg_at_k: dict[int, float] = Field(default_factory=dict)
+    hit_at_k: dict[int, float] = Field(default_factory=dict)
     mrr: float = Field(0.0, description="Mean Reciprocal Rank")
     avg_latency_ms: float = Field(
         0.0, description="Average query retrieval latency in ms"

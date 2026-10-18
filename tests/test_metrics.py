@@ -150,6 +150,9 @@ def test_evaluate_retrieval_batch(sample_retrieval_results):
     )
 
     assert metrics.recall_at_k[1] == 0.5
+    assert metrics.hit_at_k == {1: 0.5, 3: 1.0}
+    assert metrics.ndcg_at_k[1] == 0.5
+    assert metrics.ndcg_at_k[3] == pytest.approx(0.8155, abs=1e-4)
     assert metrics.mrr == 0.75
     assert metrics.avg_latency_ms == 15.0
     assert metrics.answer_score == 0.5
