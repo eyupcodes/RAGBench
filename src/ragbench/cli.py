@@ -75,6 +75,20 @@ def format_ascii_table(report: BenchmarkReport) -> str:
     return "\n".join(lines)
 
 
+def _positive_int(value: str) -> int:
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError(f"must be a positive integer, got {value}")
+    return number
+
+
+def _non_negative_int(value: str) -> int:
+    number = int(value)
+    if number < 0:
+        raise argparse.ArgumentTypeError(f"must be zero or greater, got {value}")
+    return number
+
+
 def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="ragbench",
@@ -104,19 +118,19 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         "--k-values",
         "-k",
         nargs="+",
-        type=int,
+        type=_positive_int,
         default=[1, 3, 5, 10],
         help="K thresholds for Recall@K and Precision@K",
     )
     parser.add_argument(
         "--chunk-size",
-        type=int,
+        type=_positive_int,
         default=500,
         help="Target chunk size in characters (default: 500)",
     )
     parser.add_argument(
         "--chunk-overlap",
-        type=int,
+        type=_non_negative_int,
         default=50,
         help="Chunk overlap in characters (default: 50)",
     )
@@ -134,7 +148,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--rrf-k",
-        type=int,
+        type=_positive_int,
         default=60,
         help="RRF constant k for hybrid retrieval (default: 60)",
     )
@@ -180,21 +194,23 @@ def main(args: list[str] | None = None) -> int:
         print(f"Error loading dataset: {e}", file=sys.stderr)
         return 1
 
-    config = BenchmarkConfig(
-        chunking_strategies=parsed.chunkers,
-        retrieval_strategies=parsed.retrievers,
-        k_values=parsed.k_values,
-        chunk_size=parsed.chunk_size,
-        chunk_overlap=parsed.chunk_overlap,
-        vector_model_name=parsed.vector_model,
-        vector_model_names=parsed.vector_models,
-        rrf_k=parsed.rrf_k,
-        reranking_strategy=parsed.reranker,
-        reranker_model_name=parsed.reranker_model,
-    )
-
-    runner = BenchmarkRunner(config=config)
-    report = runner.run(dataset=dataset)
+    try:
+        config = BenchmarkConfig(
+            chunking_strategies=parsed.chunkers,
+            retrieval_strategies=parsed.retrievers,
+            k_values=parsed.k_values,
+            chunk_size=parsed.chunk_size,
+            chunk_overlap=parsed.chunk_overlap,
+            vector_model_name=parsed.vector_model,
+            vector_model_names=parsed.vector_models,
+            rrf_k=parsed.rrf_k,
+            reranking_strategy=parsed.reranker,
+            reranker_model_name=parsed.reranker_model,
+        )
+        report = BenchmarkRunner(config=config).run(dataset=dataset)
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
 
     if parsed.json:
         print(report.model_dump_json(indent=2))
@@ -203,9 +219,13 @@ def main(args: list[str] | None = None) -> int:
 
     if parsed.output:
         out_path = Path(parsed.output)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(report.model_dump_json(indent=2), encoding="utf-8")
-        print(f"Report saved to {out_path}")
+        try:
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(report.model_dump_json(indent=2), encoding="utf-8")
+        except OSError as e:
+            print(f"Error: cannot write report to {out_path}: {e}", file=sys.stderr)
+            return 1
+        print(f"Report saved to {out_path}", file=sys.stderr)
 
     return 0
 
