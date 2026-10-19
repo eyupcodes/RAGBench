@@ -27,6 +27,20 @@ def _ensure_unique_ids(kind: str, ids: list[str]) -> None:
         )
 
 
+def _ensure_known_doc_ids(documents: list[Document], queries: list[Query]) -> None:
+    """Raise DatasetLoadError if a query points at a document that does not exist."""
+    known = {d.id for d in documents}
+    problems = [
+        f"query {q.id!r} -> {', '.join(map(repr, unknown))}"
+        for q in queries
+        if (unknown := [i for i in q.relevant_doc_ids if i not in known])
+    ]
+    if problems:
+        raise DatasetLoadError(
+            "Unknown relevant_doc_ids (no such document): " + "; ".join(problems)
+        )
+
+
 def load_dataset_from_dict(data: dict[str, Any]) -> BenchmarkDataset:
     """Load a BenchmarkDataset from a raw Python dictionary with schema validation."""
     if not isinstance(data, dict):
@@ -46,6 +60,7 @@ def load_dataset_from_dict(data: dict[str, Any]) -> BenchmarkDataset:
 
     _ensure_unique_ids("document", [d.id for d in documents])
     _ensure_unique_ids("query", [q.id for q in queries])
+    _ensure_known_doc_ids(documents, queries)
     try:
         return BenchmarkDataset(
             name=data.get("name", "unnamed_dataset"),
@@ -142,7 +157,11 @@ def load_dataset_from_directory(
             except Exception as e:
                 raise DatasetLoadError(f"Failed to read file {file_p}: {e}") from e
 
+    if not documents:
+        raise DatasetLoadError(f"No .txt or .md documents found in {doc_path}")
+
     queries = load_queries_from_json(queries_file)
+    _ensure_known_doc_ids(documents, queries)
     return BenchmarkDataset(
         name=dataset_name,
         description=f"Loaded from {doc_dir}",

@@ -175,3 +175,43 @@ def test_load_dataset_from_dict_invalid_name_raises_loader_error():
     data = {"name": 123, "documents": [], "queries": []}
     with pytest.raises(DatasetLoadError, match="Failed to parse dataset records"):
         load_dataset_from_dict(data)
+
+
+def _doc_query_data(relevant):
+    return {
+        "documents": [{"id": "doc1", "text": "Python."}],
+        "queries": [{"id": "q1", "query": "Python?", "relevant_doc_ids": relevant}],
+    }
+
+
+def test_load_dataset_from_dict_rejects_unknown_relevant_doc_id():
+    with pytest.raises(DatasetLoadError, match="query 'q1' -> 'doc9'"):
+        load_dataset_from_dict(_doc_query_data(["doc1", "doc9"]))
+
+
+def test_load_dataset_from_dict_accepts_known_relevant_doc_ids():
+    dataset = load_dataset_from_dict(_doc_query_data(["doc1"]))
+    assert dataset.queries[0].relevant_doc_ids == ["doc1"]
+
+
+def test_load_dataset_from_directory_rejects_unknown_relevant_doc_id(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "doc1.txt").write_text("Python.", encoding="utf-8")
+    queries = tmp_path / "queries.json"
+    queries.write_text(
+        json.dumps([{"id": "q1", "query": "Python?", "relevant_doc_ids": ["nope"]}]),
+        encoding="utf-8",
+    )
+    with pytest.raises(DatasetLoadError, match="'nope'"):
+        load_dataset_from_directory(docs, queries)
+
+
+def test_load_dataset_from_directory_rejects_empty_directory(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "config.json").write_text("{}", encoding="utf-8")
+    queries = tmp_path / "queries.json"
+    queries.write_text("[]", encoding="utf-8")
+    with pytest.raises(DatasetLoadError, match="No .txt or .md documents"):
+        load_dataset_from_directory(docs, queries)

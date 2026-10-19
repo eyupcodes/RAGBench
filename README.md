@@ -131,6 +131,8 @@ Veri setinizi basit bir JSON dosyası olarak hazırlayabilirsiniz:
 }
 ```
 
+`relevant_doc_ids` içindeki her kimlik `documents` listesindeki bir belgeye karşılık gelmelidir; aksi halde yükleme `DatasetLoadError` ile durur. Belge dizininden yüklerken dizinde en az bir `.txt` veya `.md` dosyası bulunmalıdır.
+
 ---
 
 ## Mimari Özeti (Architecture)
