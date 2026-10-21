@@ -215,3 +215,82 @@ def test_load_dataset_from_directory_rejects_empty_directory(tmp_path):
     queries.write_text("[]", encoding="utf-8")
     with pytest.raises(DatasetLoadError, match="No .txt or .md documents"):
         load_dataset_from_directory(docs, queries)
+
+
+@pytest.mark.parametrize(
+    "loader",
+    [load_dataset_from_json, load_queries_from_json],
+    ids=["dataset", "queries"],
+)
+def test_loaders_reject_a_directory_path(tmp_path, loader):
+    with pytest.raises(DatasetLoadError, match="not a file"):
+        loader(tmp_path)
+
+
+@pytest.mark.parametrize(
+    "loader",
+    [load_dataset_from_json, load_queries_from_json],
+    ids=["dataset", "queries"],
+)
+def test_loaders_report_non_utf8_files_with_the_path(tmp_path, loader):
+    path = tmp_path / "data.json"
+    path.write_bytes(b"\xff\xfe\x00bad")
+    with pytest.raises(DatasetLoadError, match="data.json"):
+        loader(path)
+
+
+def test_load_queries_from_json_missing_file(tmp_path):
+    with pytest.raises(DatasetLoadError, match="Queries file not found"):
+        load_queries_from_json(tmp_path / "nope.json")
+
+
+def test_load_queries_from_json_invalid_json(tmp_path):
+    path = tmp_path / "q.json"
+    path.write_text("{oops", encoding="utf-8")
+    with pytest.raises(DatasetLoadError, match="Invalid JSON"):
+        load_queries_from_json(path)
+
+
+def test_load_queries_from_json_accepts_a_queries_object(tmp_path):
+    path = tmp_path / "q.json"
+    path.write_text(
+        json.dumps({"queries": [{"id": "q1", "query": "x", "relevant_doc_ids": []}]}),
+        encoding="utf-8",
+    )
+    assert [q.id for q in load_queries_from_json(path)] == ["q1"]
+
+
+@pytest.mark.parametrize(
+    ("content", "message"),
+    [
+        ('{"items": []}', "must contain a 'queries' list"),
+        ('"just a string"', "must be a list or object"),
+        ('[{"id": "q1"}]', "Failed to parse queries list"),
+    ],
+)
+def test_load_queries_from_json_rejects_wrong_shapes(tmp_path, content, message):
+    path = tmp_path / "q.json"
+    path.write_text(content, encoding="utf-8")
+    with pytest.raises(DatasetLoadError, match=message):
+        load_queries_from_json(path)
+
+
+def test_load_dataset_from_dict_rejects_malformed_records():
+    data = {"documents": [{"id": "d1"}], "queries": []}
+    with pytest.raises(DatasetLoadError, match="Failed to parse dataset records"):
+        load_dataset_from_dict(data)
+
+
+def test_load_dataset_from_directory_missing_directory(tmp_path):
+    with pytest.raises(DatasetLoadError, match="Documents directory not found"):
+        load_dataset_from_directory(tmp_path / "nope", tmp_path / "q.json")
+
+
+def test_load_dataset_from_directory_reports_unreadable_document(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "bad.txt").write_bytes(b"\xff\xfe\x00")
+    queries = tmp_path / "queries.json"
+    queries.write_text("[]", encoding="utf-8")
+    with pytest.raises(DatasetLoadError, match="Failed to read file .*bad.txt"):
+        load_dataset_from_directory(docs, queries)
