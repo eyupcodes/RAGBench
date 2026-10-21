@@ -1,5 +1,7 @@
 """Tests for reranker strategies and factory."""
 
+import sys
+from types import ModuleType
 from unittest.mock import MagicMock
 
 import pytest
@@ -103,6 +105,78 @@ def test_cross_encoder_reranker_fallback_no_model(sample_candidates):
     assert len(out) == 3
     # Lexical fallback should prioritize c2
     assert out[0].chunk.id == "c2"
+    assert out[0].rank == 1
+
+
+def test_cross_encoder_reranker_loads_named_model(monkeypatch, sample_candidates):
+    mock_model = MagicMock()
+    mock_model.predict.return_value = [0.1, 0.95, 0.4]
+    constructor = MagicMock(return_value=mock_model)
+    module = ModuleType("sentence_transformers")
+    module.CrossEncoder = constructor
+    monkeypatch.setitem(sys.modules, "sentence_transformers", module)
+
+    reranker = CrossEncoderReranker(model_name="test-cross-encoder")
+    out = reranker.rerank(query="memory safety", results=sample_candidates, top_k=2)
+
+    constructor.assert_called_once_with("test-cross-encoder")
+    mock_model.predict.assert_called_once_with(
+        [["memory safety", r.chunk.text] for r in sample_candidates]
+    )
+    assert [r.chunk.id for r in out] == ["c2", "c3"]
+    assert [r.score for r in out] == [0.95, 0.4]
+    assert [r.rank for r in out] == [1, 2]
+
+
+@pytest.mark.parametrize("failure", ["missing_dependency", "model_load_error"])
+def test_cross_encoder_reranker_model_load_failure_uses_lexical_fallback(
+    monkeypatch, sample_candidates, failure
+):
+    constructor = MagicMock(side_effect=OSError("Model is unavailable"))
+    if failure == "missing_dependency":
+        monkeypatch.setitem(sys.modules, "sentence_transformers", None)
+    else:
+        module = ModuleType("sentence_transformers")
+        module.CrossEncoder = constructor
+        monkeypatch.setitem(sys.modules, "sentence_transformers", module)
+    original_candidates = [r.model_dump() for r in sample_candidates]
+
+    reranker = CrossEncoderReranker(model_name="test-cross-encoder")
+    out = reranker.rerank(query="memory safety", results=sample_candidates, top_k=2)
+
+    if failure == "missing_dependency":
+        constructor.assert_not_called()
+    else:
+        constructor.assert_called_once_with("test-cross-encoder")
+    expected = LexicalReranker().rerank(
+        query="memory safety", results=sample_candidates, top_k=2
+    )
+    assert out == expected
+    assert [r.chunk.id for r in out] == ["c2", "c1"]
+    assert [r.score for r in out] == [2 / 6, 0.0]
+    assert [r.rank for r in out] == [1, 2]
+    assert [r.model_dump() for r in sample_candidates] == original_candidates
+
+
+def test_cross_encoder_reranker_injected_model_skips_loading(
+    monkeypatch, sample_candidates
+):
+    constructor = MagicMock()
+    module = ModuleType("sentence_transformers")
+    module.CrossEncoder = constructor
+    monkeypatch.setitem(sys.modules, "sentence_transformers", module)
+    mock_model = MagicMock()
+    mock_model.predict.return_value = [0.1, 0.95, 0.4]
+
+    reranker = CrossEncoderReranker(model_name="test-cross-encoder", model=mock_model)
+    out = reranker.rerank(query="memory safety", results=sample_candidates, top_k=1)
+
+    constructor.assert_not_called()
+    mock_model.predict.assert_called_once_with(
+        [["memory safety", r.chunk.text] for r in sample_candidates]
+    )
+    assert [r.chunk.id for r in out] == ["c2"]
+    assert out[0].score == 0.95
     assert out[0].rank == 1
 
 
