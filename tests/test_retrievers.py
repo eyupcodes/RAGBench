@@ -1,5 +1,10 @@
 """Tests for retrieval strategies."""
 
+import sys
+from types import ModuleType
+from unittest.mock import MagicMock, call
+
+import numpy as np
 import pytest
 
 from ragbench.models import Chunk
@@ -74,6 +79,42 @@ def test_vector_retriever_fallback(sample_chunks):
 
     assert len(results) >= 1
     assert results[0].chunk.doc_id == "doc_py"
+
+
+@pytest.mark.parametrize(
+    ("top_k", "expected_indices", "expected_scores"),
+    [
+        (1, [1], [1.0]),
+        (2, [1, 2], [1.0, 0.8]),
+        (5, [1, 2, 0], [1.0, 0.8, 0.0]),
+    ],
+)
+def test_vector_retriever_dense_ranking(
+    monkeypatch, sample_chunks, top_k, expected_indices, expected_scores
+):
+    mock_model = MagicMock()
+    mock_model.encode.side_effect = [
+        np.array([[1.0, 0.0], [0.0, 1.0], [0.6, 0.8]]),
+        np.array([[0.0, 1.0]]),
+    ]
+    constructor = MagicMock(return_value=mock_model)
+    module = ModuleType("sentence_transformers")
+    module.SentenceTransformer = constructor
+    monkeypatch.setitem(sys.modules, "sentence_transformers", module)
+
+    retriever = VectorRetriever(chunks=sample_chunks, model_name="test-embedding")
+    results = retriever.retrieve("semantic query", top_k=top_k)
+
+    constructor.assert_called_once_with("test-embedding")
+    assert mock_model.encode.call_args_list == [
+        call([chunk.text for chunk in sample_chunks], normalize_embeddings=True),
+        call(["semantic query"], normalize_embeddings=True),
+    ]
+    assert [r.chunk.id for r in results] == [
+        sample_chunks[i].id for i in expected_indices
+    ]
+    assert [r.score for r in results] == pytest.approx(expected_scores)
+    assert [r.rank for r in results] == list(range(1, len(expected_indices) + 1))
 
 
 def test_retriever_empty_query(sample_chunks):
