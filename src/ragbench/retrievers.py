@@ -228,7 +228,7 @@ class VectorRetriever(BaseRetriever):
 
 
 class HybridRetriever(BaseRetriever):
-    """Hybrid RRF retriever combining BM25 and TF-IDF."""
+    """Hybrid RRF retriever combining BM25 and TF-IDF, breaking ties by chunk ID."""
 
     def __init__(self, chunks, rrf_k: int = 60):
         self.rrf_k = rrf_k
@@ -258,7 +258,7 @@ class HybridRetriever(BaseRetriever):
             if cid in tfidf_ranks:
                 rrf_score += 1.0 / (self.rrf_k + tfidf_ranks[cid])
             scored.append((chunk_by_id[cid], rrf_score))
-        scored.sort(key=lambda x: x[1], reverse=True)
+        scored.sort(key=lambda x: (-x[1], x[0].id))
         return scored[:top_k]
 
 
