@@ -151,6 +151,40 @@ def test_hybrid_retriever_basic(sample_chunks):
     assert results[0].score > 0.0
 
 
+@pytest.mark.parametrize(
+    ("top_k", "expected_ids", "expected_scores"),
+    [
+        (1, ["a"], [0.7]),
+        (2, ["a", "d"], [0.7, 0.7]),
+        (10, ["a", "d", "b", "c"], [0.7, 0.7, 7 / 12, 7 / 12]),
+    ],
+)
+def test_hybrid_retriever_breaks_score_ties_by_chunk_id(
+    monkeypatch, top_k, expected_ids, expected_scores
+):
+    chunks = [
+        Chunk(id=cid, doc_id=cid, text="candidate", chunk_index=0)
+        for cid in ["d", "c", "b", "a", "unmatched"]
+    ]
+    # Opposing rankings tie a/d at 1/2 + 1/5 and b/c at 1/3 + 1/4.
+    monkeypatch.setattr(
+        BM25Retriever,
+        "_search",
+        lambda self, query, top_k: [(chunks[i], 1.0) for i in [0, 1, 2, 3]],
+    )
+    monkeypatch.setattr(
+        TFIDFVectorRetriever,
+        "_search",
+        lambda self, query, top_k: [(chunks[i], 1.0) for i in [3, 2, 1, 0]],
+    )
+
+    results = HybridRetriever(chunks, rrf_k=1).retrieve("query", top_k=top_k)
+
+    assert [r.chunk.id for r in results] == expected_ids
+    assert [r.score for r in results] == pytest.approx(expected_scores)
+    assert [r.rank for r in results] == list(range(1, len(expected_ids) + 1))
+
+
 def test_hybrid_retriever_empty_chunks():
     retriever = HybridRetriever(chunks=[])
     assert retriever.retrieve("query", top_k=5) == []
