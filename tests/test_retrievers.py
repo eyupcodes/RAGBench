@@ -1,5 +1,6 @@
 """Tests for retrieval strategies."""
 
+import math
 import sys
 from types import ModuleType
 from unittest.mock import MagicMock, call
@@ -52,6 +53,54 @@ def test_pure_python_bm25_scoring():
     scores = bm25.get_scores(["memory", "safety"])
     assert scores[1] > scores[0]
     assert scores[1] > scores[2]
+
+
+@pytest.mark.parametrize(
+    ("query_tokens", "expected_scores"),
+    [
+        (["rare"], [math.log(8 / 3) * 10 / 7, 0.0, 0.0]),
+        (
+            ["common"],
+            [0.0, math.log(8 / 5) * 40 / 49, math.log(8 / 5) * 40 / 31],
+        ),
+        (
+            ["rare", "common"],
+            [
+                math.log(8 / 3) * 10 / 7,
+                math.log(8 / 5) * 40 / 49,
+                math.log(8 / 5) * 40 / 31,
+            ],
+        ),
+        (
+            ["common", "common"],
+            [0.0, math.log(8 / 5) * 80 / 49, math.log(8 / 5) * 80 / 31],
+        ),
+        (["missing"], [0.0, 0.0, 0.0]),
+        ([], [0.0, 0.0, 0.0]),
+    ],
+)
+def test_pure_python_bm25_scores_match_okapi_formula(query_tokens, expected_scores):
+    corpus = [["rare", "rare"], ["common", "filler", "filler"], ["common"]]
+    # Average length is 2; rare/common IDFs are log(8/3) and log(8/5).
+    # With k1=1.5, b=0.75, TF/length factors are 10/7, 40/49 and 40/31.
+    bm25 = PurePythonBM25(corpus)
+
+    assert bm25.get_scores(query_tokens) == pytest.approx(expected_scores)
+
+
+def test_bm25_retriever_without_optional_dependency(monkeypatch):
+    monkeypatch.setitem(sys.modules, "rank_bm25", None)
+    chunks = [
+        Chunk(id="c1", doc_id="d1", text="python", chunk_index=0),
+        Chunk(id="c2", doc_id="d2", text="rust rust", chunk_index=0),
+        Chunk(id="c3", doc_id="d3", text="sql sql sql", chunk_index=0),
+    ]
+
+    results = BM25Retriever(chunks).retrieve("rust", top_k=1)
+
+    assert [r.chunk.id for r in results] == ["c2"]
+    assert results[0].score == pytest.approx(math.log(8 / 3) * 10 / 7)
+    assert results[0].rank == 1
 
 
 def test_bm25_retriever(sample_chunks):
