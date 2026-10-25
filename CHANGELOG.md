@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unknown chunking/retrieval strategies, invalid chunk settings and unwritable `--output` paths print `Error: ...` and exit 1 instead of a traceback; `--k-values`, `--chunk-size`, `--chunk-overlap` and `--rrf-k` are validated (#14).
 
 ### Added
+- BM25 fallback tests verify exact Okapi scores, document-length normalization, repeated and unmatched query terms, and retrieval without the optional `rank-bm25` dependency.
 - Dense vector retrieval tests verify normalized encoding, similarity scores, ranking and top-K limits without downloading embedding models.
 - `calculate_ndcg_at_k` and `calculate_hit_at_k`; `EvaluationMetrics` now carries `ndcg_at_k` and `hit_at_k`, and the ASCII report shows an `nDCG@<max K>` column (#12).
 
