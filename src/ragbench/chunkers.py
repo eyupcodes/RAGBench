@@ -156,6 +156,15 @@ class RecursiveCharacterChunker(BaseChunker):
                             overlap_len += len(rev_p)
                         else:
                             break
+                    # The carried-over overlap must leave room for the next piece,
+                    # otherwise the chunk would exceed ``chunk_size``.
+                    while overlap_chunk and (
+                        sum(len(p) for p in overlap_chunk)
+                        + len(separator) * len(overlap_chunk)
+                        + piece_len
+                        > self.chunk_size
+                    ):
+                        overlap_chunk.pop(0)
                     current_chunk = overlap_chunk
                     current_length = sum(len(p) for p in current_chunk) + (
                         len(separator) * (len(current_chunk) - 1)

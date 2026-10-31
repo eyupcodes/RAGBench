@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- `RecursiveCharacterChunker` no longer emits chunks longer than `chunk_size` when `chunk_overlap` is large: carried-over overlap is trimmed so the next piece still fits (#24).
 - Hybrid retrieval breaks equal RRF scores by chunk ID, keeping rankings and top-K benchmark metrics reproducible across runs.
 - Dataset loaders raise `DatasetLoadError` when a query's `relevant_doc_ids` names a document that does not exist, and when a document directory contains no `.txt`/`.md` files, instead of silently scoring recall 0 (#16).
 - `--json --output` no longer prints "Report saved to ..." on stdout, so the JSON can be piped; the notice goes to stderr (#14).
