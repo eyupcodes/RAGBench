@@ -87,3 +87,22 @@ def test_get_chunker_factory():
 
     with pytest.raises(ValueError, match="Unknown chunking strategy"):
         get_chunker("unknown_strategy")
+
+
+@pytest.mark.parametrize(
+    ("chunk_size", "chunk_overlap"), [(28, 17), (30, 25), (40, 10), (20, 19)]
+)
+def test_recursive_chunks_never_exceed_chunk_size(chunk_size, chunk_overlap):
+    words = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta"]
+    text = " ".join(words[i % len(words)] + str(i) for i in range(60))
+    text += "\n\n" + " ".join(reversed(text.split()))
+    chunker = RecursiveCharacterChunker(
+        chunk_size=chunk_size, chunk_overlap=chunk_overlap
+    )
+
+    chunks = chunker.chunk_document(Document(id="d", text=text))
+
+    assert chunks
+    assert max(len(c.text) for c in chunks) <= chunk_size
+    covered = " ".join(c.text for c in chunks)
+    assert all(word in covered for word in text.split())
