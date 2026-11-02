@@ -2,10 +2,16 @@
 
 import math
 import re
+import unicodedata
 from abc import ABC, abstractmethod
 from collections import Counter
 
 from ragbench.models import EvaluationMetrics, Query, RetrievalResult
+
+
+def _normalize_answer(text: str) -> str:
+    """NFKC-normalize and case-fold so equivalent Unicode spellings compare equal."""
+    return unicodedata.normalize("NFKC", text).casefold().strip()
 
 
 def _get_relevant_doc_ids(query: Query) -> set[str]:
@@ -104,7 +110,7 @@ class ExactMatchAnswerEvaluator(BaseAnswerEvaluator):
     def evaluate(self, generated_answer: str, ground_truth: str) -> float:
         return (
             1.0
-            if generated_answer.strip().lower() == ground_truth.strip().lower()
+            if _normalize_answer(generated_answer) == _normalize_answer(ground_truth)
             else 0.0
         )
 
@@ -113,7 +119,7 @@ class TokenOverlapAnswerEvaluator(BaseAnswerEvaluator):
     """Token-level F1 overlap evaluator (deterministic, no external LLM required)."""
 
     def _tokenize(self, text: str) -> list[str]:
-        return re.findall(r"\b\w+\b", text.lower())
+        return re.findall(r"\b\w+\b", _normalize_answer(text))
 
     def evaluate(self, generated_answer: str, ground_truth: str) -> float:
         gen_tokens = self._tokenize(generated_answer)

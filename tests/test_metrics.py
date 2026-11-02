@@ -170,3 +170,16 @@ def test_evaluate_retrieval_batch_rejects_mismatched_result_count(
             query_results=[sample_retrieval_results],
             queries=queries,
         )
+
+
+@pytest.mark.parametrize(
+    ("generated", "truth"),
+    [
+        ("café", "café"),
+        ("STRASSE", "straße"),
+        ("  Istanbul ", "istanbul"),
+    ],
+)
+def test_answer_evaluators_ignore_unicode_spelling_differences(generated, truth):
+    assert ExactMatchAnswerEvaluator().evaluate(generated, truth) == 1.0
+    assert TokenOverlapAnswerEvaluator().evaluate(generated, truth) == 1.0
