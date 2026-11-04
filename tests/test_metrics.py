@@ -50,6 +50,25 @@ def test_calculate_precision_at_k(sample_retrieval_results):
     )
 
 
+def test_precision_at_k_counts_each_document_once():
+    chunks = [
+        RetrievalResult(
+            chunk=Chunk(id=f"d1_c{i}", doc_id="doc_1", text="t", chunk_index=i),
+            score=1.0 - i / 10,
+            rank=i + 1,
+        )
+        for i in range(3)
+    ]
+    other = RetrievalResult(
+        chunk=Chunk(id="d2_c0", doc_id="doc_2", text="t", chunk_index=0),
+        score=0.1,
+        rank=4,
+    )
+
+    assert calculate_precision_at_k(chunks, {"doc_1"}, k=3) == 1.0
+    assert calculate_precision_at_k([*chunks, other], {"doc_1"}, k=4) == 0.5
+
+
 def test_calculate_hit_at_k(sample_retrieval_results):
     assert calculate_hit_at_k(sample_retrieval_results, {"doc_3"}, k=2) == 0.0
     assert calculate_hit_at_k(sample_retrieval_results, {"doc_3"}, k=3) == 1.0

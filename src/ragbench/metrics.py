@@ -37,17 +37,19 @@ def calculate_recall_at_k(
 def calculate_precision_at_k(
     results: list[RetrievalResult], relevant_ids: set[str], k: int
 ) -> float:
-    """Calculate Precision@K: proportion of top-k retrieved documents that are relevant."""
+    """Calculate Precision@K: proportion of top-k retrieved documents that are relevant.
+
+    Several chunks can come from one document, so each document is counted once.
+    """
     if k <= 0:
         return 0.0
 
-    top_k_results = results[:k]
-    if not top_k_results:
+    retrieved_doc_ids = {r.chunk.doc_id for r in results[:k]}
+    if not retrieved_doc_ids:
         return 0.0
 
-    retrieved_doc_ids = {r.chunk.doc_id for r in top_k_results}
     hits = len(retrieved_doc_ids.intersection(relevant_ids))
-    return hits / len(top_k_results)
+    return hits / len(retrieved_doc_ids)
 
 
 def calculate_hit_at_k(
