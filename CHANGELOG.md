@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Precision@K counts each retrieved document once, so several top-K chunks of one relevant document no longer cap precision below 1.0 (#28).
 - Answer evaluators (`ExactMatchAnswerEvaluator`, `TokenOverlapAnswerEvaluator`) apply NFKC normalization and case folding, so composed vs decomposed accents and `ß`/`SS` no longer score as different answers (#26).
 - `RecursiveCharacterChunker` no longer emits chunks longer than `chunk_size` when `chunk_overlap` is large: carried-over overlap is trimmed so the next piece still fits (#24).
 - Hybrid retrieval breaks equal RRF scores by chunk ID, keeping rankings and top-K benchmark metrics reproducible across runs.
