@@ -7,6 +7,7 @@ from pathlib import Path
 from ragbench import __version__
 from ragbench.benchmark import BenchmarkRunner
 from ragbench.dataset import load_dataset_from_json
+from ragbench.html_report import render_html
 from ragbench.models import BenchmarkConfig, BenchmarkReport
 
 
@@ -172,6 +173,12 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         help="Path to save report (JSON format)",
     )
     parser.add_argument(
+        "--html",
+        type=str,
+        default=None,
+        help="Path to save a self-contained HTML comparison report",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="Output raw JSON to stdout instead of ASCII table",
@@ -217,15 +224,20 @@ def main(args: list[str] | None = None) -> int:
     else:
         print(format_ascii_table(report))
 
-    if parsed.output:
-        out_path = Path(parsed.output)
+    for label, path, content in (
+        ("report", parsed.output, lambda: report.model_dump_json(indent=2)),
+        ("HTML report", parsed.html, lambda: render_html(report)),
+    ):
+        if not path:
+            continue
+        out_path = Path(path)
         try:
             out_path.parent.mkdir(parents=True, exist_ok=True)
-            out_path.write_text(report.model_dump_json(indent=2), encoding="utf-8")
+            out_path.write_text(content(), encoding="utf-8")
         except OSError as e:
-            print(f"Error: cannot write report to {out_path}: {e}", file=sys.stderr)
+            print(f"Error: cannot write {label} to {out_path}: {e}", file=sys.stderr)
             return 1
-        print(f"Report saved to {out_path}", file=sys.stderr)
+        print(f"{label[0].upper()}{label[1:]} saved to {out_path}", file=sys.stderr)
 
     return 0
 
