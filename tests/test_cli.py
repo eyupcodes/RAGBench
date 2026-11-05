@@ -326,3 +326,48 @@ def test_cli_rejects_non_positive_numeric_options(tiny_dataset, capsys, option):
 
     assert excinfo.value.code == 2
     assert "must be" in capsys.readouterr().err
+
+
+def test_cli_html_writes_a_standalone_report(tiny_dataset, tmp_path, capsys):
+    html_file = tmp_path / "out" / "report.html"
+
+    exit_code = main(
+        ["-d", str(tiny_dataset), "-c", "fixed", "-r", "tfidf"]
+        + ["--html", str(html_file)]
+    )
+
+    assert exit_code == 0
+    page = html_file.read_text(encoding="utf-8")
+    assert page.startswith("<!DOCTYPE html>")
+    assert "RAGBench report: tiny" in page
+    captured = capsys.readouterr()
+    assert "RAGBench Evaluation Report" in captured.out  # ASCII table still printed
+    assert f"HTML report saved to {html_file}" in captured.err
+
+
+def test_cli_html_works_with_json_and_output(tiny_dataset, tmp_path, capsys):
+    json_file, html_file = tmp_path / "r.json", tmp_path / "r.html"
+
+    exit_code = main(
+        ["-d", str(tiny_dataset), "-c", "fixed", "-r", "tfidf", "--json"]
+        + ["-o", str(json_file), "--html", str(html_file)]
+    )
+
+    assert exit_code == 0
+    captured = capsys.readouterr()
+    assert json.loads(captured.out)["dataset_name"] == "tiny"
+    assert json_file.exists() and html_file.exists()
+    assert "Report saved to" in captured.err and "HTML report saved to" in captured.err
+
+
+def test_cli_unwritable_html_reports_an_error(tiny_dataset, tmp_path, capsys):
+    blocker = tmp_path / "blocker"
+    blocker.write_text("not a directory", encoding="utf-8")
+
+    exit_code = main(
+        ["-d", str(tiny_dataset), "-c", "fixed", "-r", "tfidf"]
+        + ["--html", str(blocker / "report.html")]
+    )
+
+    assert exit_code == 1
+    assert "Error: cannot write HTML report" in capsys.readouterr().err
