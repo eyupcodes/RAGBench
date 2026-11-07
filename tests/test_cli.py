@@ -371,3 +371,34 @@ def test_cli_unwritable_html_reports_an_error(tiny_dataset, tmp_path, capsys):
 
     assert exit_code == 1
     assert "Error: cannot write HTML report" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("option", ["-o", "--html"])
+def test_cli_bad_output_path_fails_before_benchmarking(
+    option, tiny_dataset, tmp_path, capsys, monkeypatch
+):
+    def fail_run(self, dataset):
+        raise AssertionError("benchmark must not start")
+
+    monkeypatch.setattr("ragbench.cli.BenchmarkRunner.run", fail_run)
+    blocker = tmp_path / "blocker"
+    blocker.write_text("not a directory", encoding="utf-8")
+
+    for bad in (blocker / "out" / "r.json", tmp_path):
+        exit_code = main(["-d", str(tiny_dataset), option, str(bad)])
+
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        assert "Error: cannot write" in captured.err
+        assert captured.out == ""
+
+
+def test_cli_output_in_missing_directory_is_still_created(tiny_dataset, tmp_path):
+    out = tmp_path / "new" / "dir" / "report.json"
+
+    exit_code = main(
+        ["-d", str(tiny_dataset), "-c", "fixed", "-r", "tfidf", "-o", str(out)]
+    )
+
+    assert exit_code == 0
+    assert out.is_file()
