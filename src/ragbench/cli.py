@@ -187,8 +187,25 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(args)
 
 
+def _output_path_problem(path: Path) -> str | None:
+    """Why ``path`` cannot be written, or ``None``; missing parents are fine."""
+    if path.is_dir():
+        return "it is a directory"
+    for parent in path.parents:
+        if parent.exists():
+            return None if parent.is_dir() else f"{parent} is not a directory"
+    return None
+
+
 def main(args: list[str] | None = None) -> int:
     parsed = parse_args(args)
+
+    # Fail before a long benchmark, not after it.
+    for label, path in (("report", parsed.output), ("HTML report", parsed.html)):
+        problem = _output_path_problem(Path(path)) if path else None
+        if problem:
+            print(f"Error: cannot write {label} to {path}: {problem}", file=sys.stderr)
+            return 1
 
     dataset_path = Path(parsed.dataset)
     if not dataset_path.exists():
