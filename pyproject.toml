@@ -27,6 +27,7 @@ embeddings = [
 dev = [
     "pytest>=8.0.0",
     "pytest-cov>=4.0.0",
+    "mypy>=1.10",
     "rank-bm25>=0.2.2",
     "ruff>=0.13,<1",
 ]
@@ -56,3 +57,14 @@ line-length = 88
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 ignore = ["E501"]  # line length is handled by ruff format
+
+[tool.mypy]
+python_version = "3.10"
+check_untyped_defs = true
+warn_unused_ignores = true
+plugins = ["pydantic.mypy"]
+files = ["src"]
+
+[[tool.mypy.overrides]]
+module = ["rank_bm25", "sentence_transformers"]
+ignore_missing_imports = true
