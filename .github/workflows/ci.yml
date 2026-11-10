@@ -33,6 +33,9 @@ jobs:
     - name: Lint
       run: ruff check .
 
+    - name: Type check
+      run: mypy
+
     - name: Run tests
       run: |
         pytest --cov=ragbench --cov-report=term-missing
