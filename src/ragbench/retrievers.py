@@ -4,6 +4,7 @@ import math
 import re
 from abc import ABC, abstractmethod
 from collections import Counter
+from typing import Any
 
 from ragbench.models import Chunk, RetrievalResult
 
@@ -188,8 +189,8 @@ class VectorRetriever(BaseRetriever):
 
     def __init__(self, chunks: list[Chunk], model_name: str | None = None):
         self.model_name = model_name
-        self._dense_model = None
-        self._dense_embeddings = None
+        self._dense_model: Any = None
+        self._dense_embeddings: Any = None
         self._fallback_retriever: TFIDFVectorRetriever | None = None
         super().__init__(chunks)
 
