@@ -177,6 +177,27 @@ def test_evaluate_retrieval_batch(sample_retrieval_results):
     assert metrics.answer_score == 0.5
 
 
+@pytest.mark.parametrize(
+    ("field", "values"),
+    [("generated_answers", ["only one"]), ("latencies_ms", [1.0, 2.0, 3.0])],
+)
+def test_evaluate_retrieval_batch_rejects_mismatched_optional_lists(
+    sample_retrieval_results, field, values
+):
+    queries = [
+        Query(id="q1", query="Query 1", relevant_doc_ids=["doc_1"]),
+        Query(id="q2", query="Query 2", relevant_doc_ids=["doc_2"]),
+    ]
+
+    with pytest.raises(ValueError, match=f"{field} has {len(values)} entries"):
+        evaluate_retrieval_batch(
+            query_results=[sample_retrieval_results] * 2,
+            queries=queries,
+            answer_evaluator=ExactMatchAnswerEvaluator(),
+            **{field: values},
+        )
+
+
 def test_evaluate_retrieval_batch_rejects_mismatched_result_count(
     sample_retrieval_results,
 ):

@@ -153,14 +153,23 @@ def evaluate_retrieval_batch(
 ) -> EvaluationMetrics:
     """Calculate aggregate benchmark metrics across all queries.
 
-    Raises ``ValueError`` if ``query_results`` does not have one entry per query,
-    since zipping them would silently drop queries from the averages.
+    Raises ``ValueError`` if ``query_results``, ``latencies_ms`` or
+    ``generated_answers`` (when given) do not have one entry per query, since a
+    mismatch would silently drop queries from the averages or the answer score.
     """
     if len(query_results) != len(queries):
         raise ValueError(
             f"query_results has {len(query_results)} entries "
             f"but there are {len(queries)} queries"
         )
+    for name, values in (
+        ("latencies_ms", latencies_ms),
+        ("generated_answers", generated_answers),
+    ):
+        if values is not None and len(values) != len(queries):
+            raise ValueError(
+                f"{name} has {len(values)} entries but there are {len(queries)} queries"
+            )
     if k_values is None:
         k_values = [1, 3, 5, 10]
     if not queries:
@@ -192,7 +201,7 @@ def evaluate_retrieval_batch(
     )
 
     answer_score = None
-    if answer_evaluator and generated_answers and len(generated_answers) == n_queries:
+    if answer_evaluator and generated_answers:
         scores = []
         for q, gen_ans in zip(queries, generated_answers, strict=True):
             if q.ground_truth_answer is not None:
