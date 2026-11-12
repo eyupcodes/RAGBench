@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI runs `mypy` on `src` (pydantic plugin, `check_untyped_defs`); `mypy` is part of the `dev` extras (#34).
 
 ### Fixed
+- `evaluate_retrieval_batch` raises `ValueError` when `generated_answers` or `latencies_ms` does not have one entry per query, instead of silently dropping the answer score or averaging the wrong number of latencies (#36).
 - `--output` and `--html` paths that cannot be written (a directory, or below a regular file) are rejected before the benchmark starts instead of after it has finished (#32).
 - Precision@K counts each retrieved document once, so several top-K chunks of one relevant document no longer cap precision below 1.0 (#28).
 - Answer evaluators (`ExactMatchAnswerEvaluator`, `TokenOverlapAnswerEvaluator`) apply NFKC normalization and case folding, so composed vs decomposed accents and `ß`/`SS` no longer score as different answers (#26).
