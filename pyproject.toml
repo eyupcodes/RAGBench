@@ -60,6 +60,7 @@ ignore = ["E501"]  # line length is handled by ruff format
 
 [tool.mypy]
 python_version = "3.10"
+strict = true
 check_untyped_defs = true
 warn_unused_ignores = true
 plugins = ["pydantic.mypy"]
