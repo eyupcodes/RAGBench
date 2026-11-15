@@ -231,7 +231,7 @@ class VectorRetriever(BaseRetriever):
 class HybridRetriever(BaseRetriever):
     """Hybrid RRF retriever combining BM25 and TF-IDF, breaking ties by chunk ID."""
 
-    def __init__(self, chunks, rrf_k: int = 60):
+    def __init__(self, chunks: list[Chunk], rrf_k: int = 60):
         self.rrf_k = rrf_k
         super().__init__(chunks)
 
@@ -239,12 +239,12 @@ class HybridRetriever(BaseRetriever):
         self._bm25 = BM25Retriever(self.chunks)
         self._tfidf = TFIDFVectorRetriever(self.chunks)
 
-    def _search(self, query: str, top_k: int):
+    def _search(self, query: str, top_k: int) -> list[tuple[Chunk, float]]:
         pool_k = max(top_k * 3, 20)
         bm25_results = self._bm25._search(query, pool_k)
         tfidf_results = self._tfidf._search(query, pool_k)
 
-        def rank_map(results):
+        def rank_map(results: list[tuple[Chunk, float]]) -> dict[str, int]:
             return {chunk.id: rank for rank, (chunk, _) in enumerate(results, start=1)}
 
         bm25_ranks = rank_map(bm25_results)

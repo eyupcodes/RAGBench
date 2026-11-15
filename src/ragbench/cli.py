@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 from ragbench import __version__
@@ -241,10 +242,11 @@ def main(args: list[str] | None = None) -> int:
     else:
         print(format_ascii_table(report))
 
-    for label, path, content in (
+    outputs: tuple[tuple[str, str | None, Callable[[], str]], ...] = (
         ("report", parsed.output, lambda: report.model_dump_json(indent=2)),
         ("HTML report", parsed.html, lambda: render_html(report)),
-    ):
+    )
+    for label, path, content in outputs:
         if not path:
             continue
         out_path = Path(path)
