@@ -113,8 +113,13 @@ class RecursiveCharacterChunker(BaseChunker):
                 new_separators = separators[i + 1 :]
                 break
 
+        # Keep sentence punctuation (". ", "? ", "! ") on the preceding piece and
+        # only use the whitespace part to join pieces again.
+        punctuation = separator.rstrip()
+        join_separator = separator[len(punctuation) :]
         if separator:
             splits = text.split(separator)
+            splits = [s + punctuation for s in splits[:-1]] + splits[-1:]
         else:
             splits = list(text)
 
@@ -137,14 +142,14 @@ class RecursiveCharacterChunker(BaseChunker):
 
         for piece in good_splits:
             piece_len = len(piece)
-            sep_len = len(separator) if current_chunk else 0
+            sep_len = len(join_separator) if current_chunk else 0
 
             if current_length + piece_len + sep_len <= self.chunk_size:
                 current_chunk.append(piece)
                 current_length += piece_len + sep_len
             else:
                 if current_chunk:
-                    joined = separator.join(current_chunk).strip()
+                    joined = join_separator.join(current_chunk).strip()
                     if joined:
                         final_chunks.append(joined)
 
@@ -160,25 +165,25 @@ class RecursiveCharacterChunker(BaseChunker):
                     # otherwise the chunk would exceed ``chunk_size``.
                     while overlap_chunk and (
                         sum(len(p) for p in overlap_chunk)
-                        + len(separator) * len(overlap_chunk)
+                        + len(join_separator) * len(overlap_chunk)
                         + piece_len
                         > self.chunk_size
                     ):
                         overlap_chunk.pop(0)
                     current_chunk = overlap_chunk
                     current_length = sum(len(p) for p in current_chunk) + (
-                        len(separator) * (len(current_chunk) - 1)
+                        len(join_separator) * (len(current_chunk) - 1)
                         if current_chunk
                         else 0
                     )
 
                 current_chunk.append(piece)
                 current_length += len(piece) + (
-                    len(separator) if len(current_chunk) > 1 else 0
+                    len(join_separator) if len(current_chunk) > 1 else 0
                 )
 
         if current_chunk:
-            joined = separator.join(current_chunk).strip()
+            joined = join_separator.join(current_chunk).strip()
             if joined:
                 final_chunks.append(joined)
 
