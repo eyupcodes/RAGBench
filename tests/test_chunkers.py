@@ -65,6 +65,30 @@ def test_recursive_chunker_fallback_to_sentence():
     assert len(chunks) >= 2
 
 
+def test_recursive_chunker_keeps_sentence_terminators():
+    text = "First sentence here. Second one now? Third! Fourth stays."
+    doc = Document(id="doc_t", text=text)
+    chunks = RecursiveCharacterChunker(chunk_size=25, chunk_overlap=0).chunk_document(
+        doc
+    )
+
+    assert [c.text for c in chunks] == [
+        "First sentence here.",
+        "Second one now?",
+        "Third! Fourth stays.",
+    ]
+    assert all(len(c.text) <= 25 for c in chunks)
+
+
+def test_recursive_chunker_separator_only_text_is_not_lost():
+    doc = Document(id="doc_q", text="? ")
+    chunks = RecursiveCharacterChunker(chunk_size=10, chunk_overlap=0).chunk_document(
+        doc
+    )
+
+    assert [c.text for c in chunks] == ["?"]
+
+
 def test_chunk_documents_batch():
     docs = [
         Document(id="d1", text="Short text 1"),
