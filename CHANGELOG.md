@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- CI uses a read-only `contents` token, cancels superseded runs of the same ref and fails when branch coverage drops below 90% (#42).
 - `mypy` runs in strict mode; the hybrid retriever and CLI output helpers gained the missing type annotations (#38).
 - CI runs `mypy` on `src` (pydantic plugin, `check_untyped_defs`); `mypy` is part of the `dev` extras (#34).
 
