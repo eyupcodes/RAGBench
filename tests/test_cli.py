@@ -1,6 +1,9 @@
 """Tests for command-line interface and table reporting."""
 
 import json
+import sys
+from types import ModuleType
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -402,3 +405,51 @@ def test_cli_output_in_missing_directory_is_still_created(tiny_dataset, tmp_path
 
     assert exit_code == 0
     assert out.is_file()
+
+
+def test_cli_warns_when_the_embedding_model_falls_back(
+    tiny_dataset, monkeypatch, capsys
+):
+    module = ModuleType("sentence_transformers")
+    module.SentenceTransformer = MagicMock(side_effect=OSError("offline"))
+    monkeypatch.setitem(sys.modules, "sentence_transformers", module)
+
+    code = main(
+        [
+            "--dataset",
+            str(tiny_dataset),
+            "--chunkers",
+            "fixed",
+            "--retrievers",
+            "vector",
+            "--vector-model",
+            "some/model",
+            "--k-values",
+            "1",
+            "--json",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "embedding model 'some/model' could not be loaded" in captured.err
+    assert "OSError: offline" in captured.err
+    assert '"embedding_fallback": "OSError: offline"' in captured.out
+
+
+def test_cli_does_not_warn_without_a_requested_model(tiny_dataset, capsys):
+    code = main(
+        [
+            "--dataset",
+            str(tiny_dataset),
+            "--chunkers",
+            "fixed",
+            "--retrievers",
+            "vector",
+            "--k-values",
+            "1",
+        ]
+    )
+
+    assert code == 0
+    assert "Warning" not in capsys.readouterr().err

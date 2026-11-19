@@ -80,6 +80,8 @@ ragbench --dataset examples/data/sample_tech_docs.json --html report.html
 
 `--json` yazdığı stdout'u yalnızca JSON olarak tutar ("Report saved" bildirimi stderr'e gider), bu yüzden doğrudan `jq`'ya yönlendirilebilir. Geçersiz seçenekler (bilinmeyen strateji, `--chunk-overlap >= --chunk-size`, yazılamayan `--output`) traceback yerine `Error: ...` mesajı ve çıkış kodu 1 verir; `--k-values`, `--chunk-size` ve `--rrf-k` pozitif, `--chunk-overlap` negatif olmayan tam sayı olmalıdır (çıkış kodu 2).
 
+`--vector-model` ile istenen gömme modeli yüklenemezse (paket eksik, model adı yanlış, ağ yok) `vector` stratejisi TF-IDF'e döner; bu durum stderr'e `Warning: ...` olarak yazılır, JSON çıktısında `embedding_fallback` alanında görünür ve HTML raporunda gömme hücresi `(TF-IDF fallback)` ile işaretlenir.
+
 ---
 
 ### Python API Olarak Kullanım

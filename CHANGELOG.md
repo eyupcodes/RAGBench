@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI runs `mypy` on `src` (pydantic plugin, `check_untyped_defs`); `mypy` is part of the `dev` extras (#34).
 
 ### Fixed
+- A `vector` strategy whose embedding model cannot be loaded no longer passes off TF-IDF results as the model's: the CLI warns on stderr, `embedding_fallback` in the JSON report carries the reason and the HTML report marks the cell (#44).
 - `RecursiveCharacterChunker` keeps sentence punctuation (`.`, `?`, `!`) in chunk text and no longer drops text that consists only of separators (#40).
 - `evaluate_retrieval_batch` raises `ValueError` when `generated_answers` or `latencies_ms` does not have one entry per query, instead of silently dropping the answer score or averaging the wrong number of latencies (#36).
 - `--output` and `--html` paths that cannot be written (a directory, or below a regular file) are rejected before the benchmark starts instead of after it has finished (#32).

@@ -237,6 +237,15 @@ def main(args: list[str] | None = None) -> int:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
+    for result in report.results:
+        if result.embedding_fallback:
+            print(
+                f"Warning: embedding model '{result.embedding_model}' could not be "
+                f"loaded ({result.embedding_fallback}); '{result.retrieval_strategy}' "
+                "results use the TF-IDF fallback instead.",
+                file=sys.stderr,
+            )
+
     if parsed.json:
         print(report.model_dump_json(indent=2))
     else:
