@@ -94,3 +94,20 @@ def test_report_without_ndcg_omits_the_column():
     page = render_html(_report(result))
 
     assert "nDCG" not in page
+
+
+def test_embedding_fallback_is_marked_in_the_embedding_cell():
+    html = render_html(
+        _report(
+            _result(
+                "fixed",
+                0.5,
+                0.5,
+                1.0,
+                retrieval="vector",
+                embedding_model="m",
+                embedding_fallback="OSError: offline",
+            )
+        )
+    )
+    assert "m (TF-IDF fallback)" in html

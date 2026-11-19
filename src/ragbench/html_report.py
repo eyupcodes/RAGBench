@@ -68,7 +68,8 @@ def render_html(report: BenchmarkReport) -> str:
             result.chunking_strategy,
             result.retrieval_strategy,
             result.reranking_strategy or "none",
-            result.embedding_model or "-",
+            (result.embedding_model or "-")
+            + (" (TF-IDF fallback)" if result.embedding_fallback else ""),
         ]
         cells = [f'<td class="name">{escape(c)}</td>' for c in text_cells]
         cells.append(f"<td>{result.num_chunks}</td>")

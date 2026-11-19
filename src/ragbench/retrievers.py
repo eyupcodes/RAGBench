@@ -192,6 +192,9 @@ class VectorRetriever(BaseRetriever):
         self._dense_model: Any = None
         self._dense_embeddings: Any = None
         self._fallback_retriever: TFIDFVectorRetriever | None = None
+        # Why the requested embedding model was not used (None when it was, or
+        # when no model was requested and TF-IDF is the intended behaviour).
+        self.fallback_reason: str | None = None
         super().__init__(chunks)
 
     def _index(self) -> None:
@@ -208,8 +211,8 @@ class VectorRetriever(BaseRetriever):
                     texts, normalize_embeddings=True
                 )
                 return
-            except Exception:
-                pass
+            except Exception as exc:
+                self.fallback_reason = f"{type(exc).__name__}: {exc}"
 
         self._fallback_retriever = TFIDFVectorRetriever(self.chunks)
 

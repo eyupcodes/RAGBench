@@ -269,3 +269,20 @@ def test_get_retriever_vector_model_syntax(sample_chunks):
     r_dense = get_retriever("dense:bge-Small-EN", chunks=sample_chunks)
     assert isinstance(r_dense, VectorRetriever)
     assert r_dense.model_name == "bge-Small-EN"
+
+
+def test_vector_retriever_records_why_the_model_was_not_used(
+    monkeypatch, sample_chunks
+):
+    module = ModuleType("sentence_transformers")
+    module.SentenceTransformer = MagicMock(side_effect=OSError("no such model"))
+    monkeypatch.setitem(sys.modules, "sentence_transformers", module)
+
+    retriever = VectorRetriever(chunks=sample_chunks, model_name="missing-model")
+
+    assert retriever.fallback_reason == "OSError: no such model"
+    assert retriever.retrieve("Python readability", top_k=1)
+
+
+def test_vector_retriever_without_model_has_no_fallback_reason(sample_chunks):
+    assert VectorRetriever(chunks=sample_chunks).fallback_reason is None

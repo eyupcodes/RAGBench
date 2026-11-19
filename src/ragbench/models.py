@@ -126,6 +126,11 @@ class StrategyResult(BaseModel):
     embedding_model: str | None = Field(
         None, description="Embedding model name used if vector retrieval"
     )
+    embedding_fallback: str | None = Field(
+        None,
+        description="Why the embedding model could not be loaded, when the "
+        "TF-IDF fallback produced these results instead",
+    )
     num_chunks: int
     metrics: EvaluationMetrics
 

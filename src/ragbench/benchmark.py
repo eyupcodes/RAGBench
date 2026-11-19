@@ -129,6 +129,7 @@ class BenchmarkRunner:
                         retrieval_strategy=ret_strat,
                         reranking_strategy=active_config.reranking_strategy,
                         embedding_model=embedding_model,
+                        embedding_fallback=getattr(retriever, "fallback_reason", None),
                         num_chunks=len(chunks),
                         metrics=metrics,
                     )
