@@ -1,6 +1,7 @@
 """Command line interface and terminal reporting for RAGBench."""
 
 import argparse
+import os
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -198,6 +199,28 @@ def _output_path_problem(path: Path) -> str | None:
     return None
 
 
+def _same_file(first: Path, second: Path) -> bool:
+    if first.exists() and second.exists():
+        return os.path.samefile(first, second)
+    return first.absolute().resolve() == second.absolute().resolve()
+
+
+def _output_clash(parsed: argparse.Namespace) -> str | None:
+    """Name two paths that are one file, where writing would destroy the first.
+
+    Checks each report against the dataset and ``--html`` against ``--output``.
+    """
+    pairs = (
+        ("report", parsed.output, "dataset", parsed.dataset),
+        ("HTML report", parsed.html, "dataset", parsed.dataset),
+        ("HTML report", parsed.html, "report", parsed.output),
+    )
+    for label, path, other_label, other in pairs:
+        if path and other and _same_file(Path(path), Path(other)):
+            return f"{label} path {path} is the same file as the {other_label}"
+    return None
+
+
 def main(args: list[str] | None = None) -> int:
     parsed = parse_args(args)
 
@@ -207,6 +230,11 @@ def main(args: list[str] | None = None) -> int:
         if problem:
             print(f"Error: cannot write {label} to {path}: {problem}", file=sys.stderr)
             return 1
+
+    clash = _output_clash(parsed)
+    if clash:
+        print(f"Error: {clash}", file=sys.stderr)
+        return 1
 
     dataset_path = Path(parsed.dataset)
     if not dataset_path.exists():
