@@ -453,3 +453,42 @@ def test_cli_does_not_warn_without_a_requested_model(tiny_dataset, capsys):
 
     assert code == 0
     assert "Warning" not in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("option", ["-o", "--html"])
+def test_cli_refuses_report_that_is_the_dataset(
+    option, tiny_dataset, capsys, monkeypatch
+):
+    def fail_run(self, dataset):
+        raise AssertionError("benchmark must not start")
+
+    monkeypatch.setattr("ragbench.cli.BenchmarkRunner.run", fail_run)
+    before = tiny_dataset.read_text(encoding="utf-8")
+
+    exit_code = main(["-d", str(tiny_dataset), option, str(tiny_dataset)])
+
+    assert exit_code == 1
+    assert "is the same file as the dataset" in capsys.readouterr().err
+    assert tiny_dataset.read_text(encoding="utf-8") == before
+
+
+def test_cli_refuses_dataset_given_by_another_spelling(tiny_dataset, tmp_path, capsys):
+    (tmp_path / "sub").mkdir()
+    respelled = tmp_path / "sub" / ".." / tiny_dataset.name
+
+    exit_code = main(["-d", str(tiny_dataset), "-o", str(respelled)])
+
+    assert exit_code == 1
+    assert "is the same file as the dataset" in capsys.readouterr().err
+
+
+def test_cli_refuses_both_reports_at_one_path(tiny_dataset, tmp_path, capsys):
+    report = tmp_path / "report.out"
+
+    exit_code = main(
+        ["-d", str(tiny_dataset), "-o", str(report), "--html", str(report)]
+    )
+
+    assert exit_code == 1
+    assert "HTML report path" in capsys.readouterr().err
+    assert not report.exists()
